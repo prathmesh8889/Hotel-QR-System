@@ -291,6 +291,81 @@ export function updateOrderStatus(orderId: string, status: OrderStatus): Order |
   return orders[index];
 }
 
+export function setEstimatedTime(orderId: string, minutes: number): Order | null {
+  const orders = getOrders();
+  const index = orders.findIndex((o) => o.id === orderId);
+  if (index === -1) return null;
+  orders[index].estimatedMinutes = minutes;
+  localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+  syncToSupabase('orders', orders);
+  notifyListeners();
+  return orders[index];
+}
+
+export function addOrderRating(orderId: string, rating: number, review?: string): Order | null {
+  const orders = getOrders();
+  const index = orders.findIndex((o) => o.id === orderId);
+  if (index === -1) return null;
+  orders[index].rating = rating;
+  if (review) orders[index].review = review;
+  localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+  syncToSupabase('orders', orders);
+  notifyListeners();
+  return orders[index];
+}
+
+export function getOrderHistory(): Order[] {
+  return getOrders().filter(o => o.status === 'paid' || o.status === 'cancelled');
+}
+
+export function getAnalyticsData() {
+  const orders = getOrders();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const todayOrders = orders.filter(o => o.timestamp >= today.getTime());
+  const totalRevenue = todayOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+  const avgOrderValue = todayOrders.length > 0 ? totalRevenue / todayOrders.length : 0;
+  
+  // Top selling items
+  const itemSales: Record<string, { name: string; count: number; revenue: number; emoji: string }> = {};
+  orders.forEach(order => {
+    order.items.forEach(item => {
+      const key = item.menuItem.id;
+      if (!itemSales[key]) {
+        itemSales[key] = { name: item.menuItem.name, count: 0, revenue: 0, emoji: item.menuItem.imageUrl };
+      }
+      itemSales[key].count += item.quantity;
+      itemSales[key].revenue += item.menuItem.price * item.quantity;
+    });
+  });
+  const topItems = Object.values(itemSales).sort((a, b) => b.count - a.count).slice(0, 5);
+  
+  // Peak hours
+  const hourCounts = new Array(24).fill(0);
+  orders.forEach(order => {
+    const hour = new Date(order.timestamp).getHours();
+    hourCounts[hour]++;
+  });
+  const peakHour = hourCounts.indexOf(Math.max(...hourCounts));
+  
+  // Ratings
+  const ratedOrders = orders.filter(o => o.rating);
+  const avgRating = ratedOrders.length > 0 
+    ? ratedOrders.reduce((sum, o) => sum + (o.rating || 0), 0) / ratedOrders.length 
+    : 0;
+  
+  return {
+    totalOrders: todayOrders.length,
+    totalRevenue,
+    avgOrderValue,
+    topItems,
+    peakHour,
+    avgRating,
+    totalRatedOrders: ratedOrders.length,
+  };
+}
+
 export async function simulateNewOrder(): Promise<Order> {
   const items = getMenuItems().filter((i) => i.available);
   const numItems = Math.floor(Math.random() * 3) + 1;

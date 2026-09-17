@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { getMenuItems, getTables, getSettings, placeOrder, getOrders, subscribe } from '../store';
+import { getMenuItems, getTables, getSettings, placeOrder, getOrders, subscribe, addOrderRating } from '../store';
 import { MenuItem, CartItem, Order, OrderStatus } from '../types';
-import { User, Phone, ShoppingBag, CheckCircle, Receipt, CreditCard, Clock, ChefHat, Truck, MapPin, Star, Shield, ArrowRight, X, Minus, Plus, AlertCircle } from 'lucide-react';
+import { User, Phone, ShoppingBag, CheckCircle, Receipt, CreditCard, Clock, ChefHat, Truck, MapPin, Star, Shield, ArrowRight, X, Minus, Plus, AlertCircle, Share2, Download, Moon, Sun, MessageSquare, RotateCcw } from 'lucide-react';
 
 export default function CustomerFlow() {
   const [searchParams] = useSearchParams();
@@ -13,7 +13,7 @@ export default function CustomerFlow() {
   const savedState = sessionStorage.getItem('customer_order_state');
   const initialState = savedState ? JSON.parse(savedState) : null;
 
-  const [step, setStep] = useState<'contact' | 'menu' | 'bill' | 'payment'>(initialState?.step || 'contact');
+  const [step, setStep] = useState<'contact' | 'menu' | 'bill' | 'payment' | 'rating'>(initialState?.step || 'contact');
   const [customerName, setCustomerName] = useState(initialState?.customerName || '');
   const [customerPhone, setCustomerPhone] = useState(initialState?.customerPhone || '');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -28,6 +28,10 @@ export default function CustomerFlow() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [showNote, setShowNote] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [darkMode, setDarkMode] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [review, setReview] = useState('');
+  const [showShareMenu, setShowShareMenu] = useState(false);
 
   // Save state to sessionStorage whenever it changes
   useEffect(() => {
@@ -210,18 +214,100 @@ export default function CustomerFlow() {
   const getStatusInfo = (status: OrderStatus | null) => {
     switch (status) {
       case 'pending':
-        return { label: 'Order Received', subtitle: 'Your order has been received', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', progress: 25 };
+        return { label: 'Order Received', subtitle: 'Your order has been received', icon: Clock, color: darkMode ? 'text-amber-400' : 'text-amber-600', bg: darkMode ? 'bg-amber-900/20' : 'bg-amber-50', border: darkMode ? 'border-amber-700' : 'border-amber-200', progress: 25 };
       case 'preparing':
-        return { label: 'Being Prepared', subtitle: 'Our chef is preparing your food', icon: ChefHat, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', progress: 50 };
+        return { label: 'Being Prepared', subtitle: 'Our chef is preparing your food', icon: ChefHat, color: darkMode ? 'text-blue-400' : 'text-blue-600', bg: darkMode ? 'bg-blue-900/20' : 'bg-blue-50', border: darkMode ? 'border-blue-700' : 'border-blue-200', progress: 50 };
       case 'ready':
-        return { label: 'Ready to Serve', subtitle: 'Your order is ready!', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', progress: 75 };
+        return { label: 'Ready to Serve', subtitle: 'Your order is ready!', icon: CheckCircle, color: darkMode ? 'text-emerald-400' : 'text-emerald-600', bg: darkMode ? 'bg-emerald-900/20' : 'bg-emerald-50', border: darkMode ? 'border-emerald-700' : 'border-emerald-200', progress: 75 };
       case 'served':
-        return { label: 'Served', subtitle: 'Enjoy your meal!', icon: Truck, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200', progress: 100 };
+        return { label: 'Served', subtitle: 'Enjoy your meal!', icon: Truck, color: darkMode ? 'text-purple-400' : 'text-purple-600', bg: darkMode ? 'bg-purple-900/20' : 'bg-purple-50', border: darkMode ? 'border-purple-700' : 'border-purple-200', progress: 100 };
       case 'paid':
-        return { label: 'Completed', subtitle: 'Thank you for dining with us!', icon: CreditCard, color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200', progress: 100 };
+        return { label: 'Completed', subtitle: 'Thank you for dining with us!', icon: CreditCard, color: darkMode ? 'text-slate-400' : 'text-slate-600', bg: darkMode ? 'bg-slate-800' : 'bg-slate-50', border: darkMode ? 'border-slate-700' : 'border-slate-200', progress: 100 };
       default:
         return { label: 'Processing', subtitle: 'Please wait...', icon: Clock, color: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-200', progress: 0 };
     }
+  };
+
+  const handleShare = () => {
+    if (!completedOrder) return;
+    const shareText = `🍽️ My Order from ${settings.name}\n\n` +
+      `Order #${completedOrder.id.slice(-6)}\n` +
+      `Table: ${completedOrder.tableNumber}\n\n` +
+      `Items:\n${completedOrder.items.map(i => `• ${i.menuItem.imageUrl} ${i.menuItem.name} x${i.quantity} - ₹${(i.menuItem.price * i.quantity).toFixed(0)}`).join('\n')}\n\n` +
+      `Total: ₹${(completedOrder.totalAmount * 1.18).toFixed(0)}\n` +
+      `Status: ${currentOrderStatus}`;
+    
+    if (navigator.share) {
+      navigator.share({ title: 'My Order', text: shareText }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(shareText);
+      alert('Order details copied to clipboard!');
+    }
+    setShowShareMenu(false);
+  };
+
+  const handleDownloadReceipt = () => {
+    if (!completedOrder) return;
+    const receipt = `
+═══════════════════════════════════════
+        ${settings.name}
+        Order Receipt
+═══════════════════════════════════════
+
+Order ID: ${completedOrder.id}
+Date: ${new Date(completedOrder.timestamp).toLocaleString()}
+Table: ${completedOrder.tableNumber}
+Customer: ${completedOrder.customerName}
+Phone: ${completedOrder.customerPhone}
+
+───────────────────────────────────────
+ITEMS ORDERED:
+───────────────────────────────────────
+${completedOrder.items.map(item => 
+  `${item.menuItem.imageUrl} ${item.menuItem.name}
+   ${item.quantity} x ₹${item.menuItem.price.toFixed(2)} = ₹${(item.quantity * item.menuItem.price).toFixed(2)}`
+).join('\n\n')}
+
+───────────────────────────────────────
+SUBTOTAL:        ₹${completedOrder.totalAmount.toFixed(2)}
+GST (18%):       ₹${(completedOrder.totalAmount * 0.18).toFixed(2)}
+───────────────────────────────────────
+TOTAL:           ₹${(completedOrder.totalAmount * 1.18).toFixed(2)}
+───────────────────────────────────────
+
+Status: ${currentOrderStatus?.toUpperCase()}
+${completedOrder.customerNote ? `\nNote: ${completedOrder.customerNote}` : ''}
+
+═══════════════════════════════════════
+      Thank you for dining with us!
+═══════════════════════════════════════
+    `.trim();
+
+    const blob = new Blob([receipt], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `receipt-${completedOrder.id}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleSubmitRating = () => {
+    if (!completedOrder || rating === 0) return;
+    addOrderRating(completedOrder.id, rating, review);
+    setStep('menu');
+    setCart([]);
+    setCompletedOrder(null);
+    setCurrentOrderStatus(null);
+    setRating(0);
+    setReview('');
+    sessionStorage.removeItem('customer_order_state');
+  };
+
+  const handleReorder = () => {
+    if (!completedOrder) return;
+    setCart(completedOrder.items.map(item => ({ menuItem: item.menuItem, quantity: item.quantity })));
+    setStep('bill');
   };
 
   const categories = ['All', ...new Set(menuItems.map((i) => i.category))];
@@ -492,6 +578,12 @@ export default function CustomerFlow() {
               <div className="flex-1">
                 <p className={`font-bold ${statusInfo.color} text-xl`}>{statusInfo.label}</p>
                 <p className="text-sm text-slate-600 mt-0.5">{statusInfo.subtitle}</p>
+                {completedOrder.estimatedMinutes && currentOrderStatus !== 'served' && currentOrderStatus !== 'paid' && (
+                  <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                    <Clock size={12} />
+                    Estimated: {completedOrder.estimatedMinutes} min
+                  </p>
+                )}
               </div>
             </div>
             
@@ -521,6 +613,49 @@ export default function CustomerFlow() {
               </span>
               <span>Last updated: {lastUpdated.toLocaleTimeString()}</span>
             </div>
+          </div>
+
+          {/* Estimated Time Display */}
+          {completedOrder.estimatedMinutes && currentOrderStatus !== 'served' && currentOrderStatus !== 'paid' && (
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-5 mb-6 text-white shadow-lg">
+              <div className="flex items-center gap-3">
+                <Clock size={32} className="opacity-80" />
+                <div>
+                  <p className="text-blue-100 text-sm">Estimated Time</p>
+                  <p className="text-3xl font-bold">{completedOrder.estimatedMinutes} min</p>
+                  <p className="text-blue-100 text-xs mt-1">Your order will be ready soon</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 mb-6">
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`flex-1 py-3 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 ${
+                darkMode 
+                  ? 'bg-slate-800 text-white border border-slate-700' 
+                  : 'bg-white text-slate-700 border border-slate-200'
+              }`}
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              {darkMode ? 'Light' : 'Dark'}
+            </button>
+            <button
+              onClick={handleShare}
+              className="flex-1 py-3 bg-white text-slate-700 border border-slate-200 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 hover:bg-slate-50"
+            >
+              <Share2 size={18} />
+              Share
+            </button>
+            <button
+              onClick={handleDownloadReceipt}
+              className="flex-1 py-3 bg-white text-slate-700 border border-slate-200 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 hover:bg-slate-50"
+            >
+              <Download size={18} />
+              Receipt
+            </button>
           </div>
 
           {/* Order Details Card */}
@@ -614,10 +749,19 @@ export default function CustomerFlow() {
           )}
 
           {currentOrderStatus === 'paid' && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-center">
-              <CheckCircle className="text-emerald-600 mx-auto mb-2" size={32} />
-              <p className="text-emerald-700 font-bold">Payment Completed</p>
-              <p className="text-emerald-600 text-sm mt-1">Thank you for dining with us!</p>
+            <div className="space-y-3">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-center">
+                <CheckCircle className="text-emerald-600 mx-auto mb-2" size={32} />
+                <p className="text-emerald-700 font-bold">Payment Completed</p>
+                <p className="text-emerald-600 text-sm mt-1">Thank you for dining with us!</p>
+              </div>
+              <button
+                onClick={handleReorder}
+                className="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30"
+              >
+                <RotateCcw size={18} />
+                Order Again
+              </button>
             </div>
           )}
 
@@ -667,7 +811,7 @@ export default function CustomerFlow() {
               </div>
               <h2 className="text-xl font-bold text-slate-800 mb-2">Payment Successful!</h2>
               <p className="text-slate-500 text-sm mb-4">Thank you for your payment</p>
-              <div className="bg-slate-50 rounded-xl p-4 text-left">
+              <div className="bg-slate-50 rounded-xl p-4 text-left mb-4">
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-slate-500">Transaction ID</span>
                   <span className="font-mono font-semibold text-slate-800">TXN{Date.now().toString().slice(-8)}</span>
@@ -681,6 +825,13 @@ export default function CustomerFlow() {
                   <span className="font-semibold text-slate-800 capitalize">{paymentMethod}</span>
                 </div>
               </div>
+              <button
+                onClick={() => setStep('rating')}
+                className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/30"
+              >
+                <Star size={20} />
+                Rate Your Experience
+              </button>
             </div>
           ) : (
             <>
@@ -770,6 +921,105 @@ export default function CustomerFlow() {
               </div>
             </>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // Step 5: Rating & Review
+  if (step === 'rating' && completedOrder) {
+    return (
+      <div className={`min-h-screen p-4 ${darkMode ? 'bg-slate-900' : 'bg-gradient-to-b from-amber-50 to-white'}`}>
+        <div className="max-w-md mx-auto">
+          <div className={`${darkMode ? 'bg-slate-800' : 'bg-white'} rounded-3xl shadow-xl p-6`}>
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-amber-500/30">
+                <Star className="text-white" size={40} fill="white" />
+              </div>
+              <h1 className={`text-2xl font-bold mt-4 mb-1 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+                Rate Your Experience
+              </h1>
+              <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                We'd love to hear your feedback!
+              </p>
+            </div>
+
+            {/* Star Rating */}
+            <div className="mb-6">
+              <p className={`text-sm font-medium mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                How was your experience?
+              </p>
+              <div className="flex justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setRating(star)}
+                    className="transition-transform hover:scale-110"
+                  >
+                    <Star
+                      size={40}
+                      className={star <= rating ? 'text-amber-500 fill-amber-500' : darkMode ? 'text-slate-600' : 'text-slate-300'}
+                    />
+                  </button>
+                ))}
+              </div>
+              {rating > 0 && (
+                <p className={`text-center mt-2 text-sm font-medium ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                  {rating === 1 && 'Poor'}
+                  {rating === 2 && 'Fair'}
+                  {rating === 3 && 'Good'}
+                  {rating === 4 && 'Very Good'}
+                  {rating === 5 && 'Excellent!'}
+                </p>
+              )}
+            </div>
+
+            {/* Review Text */}
+            <div className="mb-6">
+              <label className={`text-sm font-medium mb-2 block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                Additional Comments (Optional)
+              </label>
+              <textarea
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+                placeholder="Tell us more about your experience..."
+                rows={4}
+                className={`w-full px-4 py-3 rounded-xl border transition ${
+                  darkMode 
+                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' 
+                    : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
+                } focus:ring-2 focus:ring-amber-500 outline-none resize-none`}
+              />
+            </div>
+
+            {/* Submit Button */}
+            <button
+              onClick={handleSubmitRating}
+              disabled={rating === 0}
+              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-500/30"
+            >
+              <CheckCircle size={20} />
+              Submit Review
+            </button>
+
+            {/* Skip Button */}
+            <button
+              onClick={() => {
+                setStep('menu');
+                setCart([]);
+                setCompletedOrder(null);
+                setCurrentOrderStatus(null);
+                sessionStorage.removeItem('customer_order_state');
+              }}
+              className={`w-full mt-3 py-3 rounded-xl font-medium text-sm transition ${
+                darkMode 
+                  ? 'text-slate-400 hover:text-slate-300' 
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Skip for now
+            </button>
+          </div>
         </div>
       </div>
     );

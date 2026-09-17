@@ -54,6 +54,9 @@ export interface Order {
   status: OrderStatus;
   timestamp: number;
   customerNote?: string;
+  estimatedMinutes?: number;
+  rating?: number;
+  review?: string;
 }
 
 export interface CartItem {

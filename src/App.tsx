@@ -14,6 +14,8 @@ import TableManagement from './pages/TableManagement';
 import StaffManagement from './pages/StaffManagement';
 import SettingsPage from './pages/SettingsPage';
 import CustomerFlow from './pages/CustomerFlow';
+import AnalyticsDashboard from './pages/AnalyticsDashboard';
+import OrderHistory from './pages/OrderHistory';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
   const { auth } = useAuth();
@@ -48,6 +50,22 @@ function AppRoutes() {
         <Route path="/live-orders" element={<LiveOrders />} />
 
         {/* Admin-only routes */}
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AnalyticsDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/order-history"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <OrderHistory />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/kitchen"
           element={

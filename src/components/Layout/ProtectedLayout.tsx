@@ -7,6 +7,8 @@ import { getOrders, subscribeToOrders, simulateNewOrder } from '../../store';
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/live-orders': 'Live Orders',
+  '/analytics': 'Analytics Dashboard',
+  '/order-history': 'Order History',
   '/kitchen': 'Kitchen Operations',
   '/menu-management': 'Menu Management',
   '/table-management': 'Tables & QR Codes',

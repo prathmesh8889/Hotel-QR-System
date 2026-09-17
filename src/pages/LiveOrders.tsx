@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getOrders, updateOrderStatus, subscribe, notify, playOrderAlert } from '../store';
+import { getOrders, updateOrderStatus, subscribe, notify, playOrderAlert, setEstimatedTime } from '../store';
 import { Order } from '../types';
 import { OrderStatusBadge } from '../components/UI/StatusBadge';
 import { PageLoader } from '../components/UI/LoadingSkeleton';
 import {
   Clock, ChefHat, CheckCircle, Truck, XCircle, AlertTriangle,
-  Play, CircleDot, Flame, Bell
+  Play, CircleDot, Flame, Bell, Timer
 } from 'lucide-react';
 
 export default function LiveOrders() {
@@ -83,6 +83,14 @@ export default function LiveOrders() {
     }
   };
 
+  const handleSetEstimatedTime = (orderId: string) => {
+    const minutes = prompt('Enter estimated time in minutes:');
+    if (minutes && !isNaN(parseInt(minutes))) {
+      setEstimatedTime(orderId, parseInt(minutes));
+      notify();
+    }
+  };
+
   const pendingOrders = orders.filter((o) => o.status === 'pending');
   const preparingOrders = orders.filter((o) => o.status === 'preparing');
   const readyOrders = orders.filter((o) => o.status === 'ready');
@@ -133,12 +141,21 @@ export default function LiveOrders() {
             </button>
           )}
           adminActions={(order) => (
-            <button
-              onClick={() => handleCancelOrder(order.id)}
-              className="flex items-center gap-1 px-2 py-1.5 text-red-500 hover:bg-red-50 text-xs font-medium rounded-lg transition"
-            >
-              <XCircle size={12} /> Cancel
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => handleSetEstimatedTime(order.id)}
+                className="flex items-center gap-1 px-2 py-1.5 text-blue-500 hover:bg-blue-50 text-xs font-medium rounded-lg transition"
+                title="Set estimated time"
+              >
+                <Timer size={12} /> Time
+              </button>
+              <button
+                onClick={() => handleCancelOrder(order.id)}
+                className="flex items-center gap-1 px-2 py-1.5 text-red-500 hover:bg-red-50 text-xs font-medium rounded-lg transition"
+              >
+                <XCircle size={12} /> Cancel
+              </button>
+            </div>
           )}
         />
 
@@ -307,6 +324,13 @@ function KanbanColumn({
                   <div className="mb-3 p-2 bg-amber-50 border border-amber-100 rounded-lg text-xs text-amber-700 flex items-center gap-1">
                     <AlertTriangle size={10} />
                     {order.customerNote}
+                  </div>
+                )}
+
+                {order.estimatedMinutes && order.status === 'pending' && (
+                  <div className="mb-3 p-2 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700 flex items-center gap-1 font-medium">
+                    <Clock size={10} />
+                    Est. time: {order.estimatedMinutes} min
                   </div>
                 )}
 

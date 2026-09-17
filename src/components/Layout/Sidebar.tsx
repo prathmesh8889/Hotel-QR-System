@@ -11,6 +11,8 @@ import {
   Settings,
   Users,
   ChefHat,
+  BarChart3,
+  History,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -26,6 +28,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', show: true },
     { to: '/live-orders', icon: ClipboardList, label: 'Live Orders', show: true },
+    { to: '/analytics', icon: BarChart3, label: 'Analytics', show: isAdmin },
+    { to: '/order-history', icon: History, label: 'Order History', show: isAdmin },
     { to: '/kitchen', icon: ChefHat, label: 'Kitchen', show: isAdmin },
     { to: '/menu-management', icon: UtensilsCrossed, label: 'Menu Management', show: isAdmin },
     { to: '/table-management', icon: Table2, label: 'Tables & QR Codes', show: isAdmin },

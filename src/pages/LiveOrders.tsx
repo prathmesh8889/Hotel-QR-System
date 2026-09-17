@@ -77,6 +77,13 @@ export default function LiveOrders() {
     }
   };
 
+  const handleMarkPaid = (orderId: string) => {
+    if (confirm('Mark this order as paid? This will free up the table.')) {
+      updateOrderStatus(orderId, 'paid');
+      notify();
+    }
+  };
+
   const pendingOrders = orders.filter((o) => o.status === 'pending');
   const preparingOrders = orders.filter((o) => o.status === 'preparing');
   const readyOrders = orders.filter((o) => o.status === 'ready');
@@ -186,12 +193,20 @@ export default function LiveOrders() {
             </button>
           )}
           adminActions={(order) => (
-            <button
-              onClick={() => handleMarkServed(order.id)}
-              className="flex items-center gap-1 px-2 py-1.5 text-purple-500 hover:bg-purple-50 text-xs font-medium rounded-lg transition"
-            >
-              <Truck size={12} /> Served
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => handleMarkServed(order.id)}
+                className="flex items-center gap-1 px-2 py-1.5 text-purple-500 hover:bg-purple-50 text-xs font-medium rounded-lg transition"
+              >
+                <Truck size={12} /> Served
+              </button>
+              <button
+                onClick={() => handleMarkPaid(order.id)}
+                className="flex items-center gap-1 px-2 py-1.5 text-emerald-500 hover:bg-emerald-50 text-xs font-medium rounded-lg transition"
+              >
+                <CheckCircle size={12} /> Paid
+              </button>
+            </div>
           )}
         />
       </div>

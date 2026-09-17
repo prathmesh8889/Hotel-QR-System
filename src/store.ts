@@ -167,15 +167,23 @@ export function updateOrderStatus(orderId: string, status: OrderStatus): Order |
   const index = orders.findIndex((o) => o.id === orderId);
   if (index === -1) return null;
   orders[index].status = status;
-  if (status === 'paid') {
-    const order = orders[index];
-    const tables = getTables();
-    const tableIndex = tables.findIndex((t) => t.number === order.tableNumber);
-    if (tableIndex !== -1) {
-      tables[tableIndex].status = 'dirty';
-      localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(tables));
-    }
+  
+  const order = orders[index];
+  const tables = getTables();
+  const tableIndex = tables.findIndex((t) => t.number === order.tableNumber);
+  
+  // When order is served, mark table as dirty (needs cleaning)
+  if (status === 'served' && tableIndex !== -1) {
+    tables[tableIndex].status = 'dirty';
+    localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(tables));
   }
+  
+  // When order is paid, mark table as available (cleaned and ready for next customer)
+  if (status === 'paid' && tableIndex !== -1) {
+    tables[tableIndex].status = 'available';
+    localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(tables));
+  }
+  
   localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
   notifyListeners();
   return orders[index];
@@ -198,9 +206,9 @@ export function simulateNewOrder(): Order {
   const tableNum = occupiedTables.length > 0
     ? occupiedTables[Math.floor(Math.random() * occupiedTables.length)].number
     : tables[Math.floor(Math.random() * tables.length)].number;
-  const notes = ['', 'No onions please', 'Extra spicy!', 'Allergic to nuts', 'Well done', ''];
-  const names = ['John Smith', 'Sarah Johnson', 'Mike Davis', 'Emily Brown', 'David Wilson'];
-  const phones = ['+1-555-0101', '+1-555-0102', '+1-555-0103', '+1-555-0104', '+1-555-0105'];
+  const notes = ['', 'No onions please', 'Extra spicy!', 'Allergic to nuts', 'Less oil please', ''];
+  const names = ['Rajesh Kumar', 'Priya Sharma', 'Amit Patel', 'Sneha Reddy', 'Vikram Singh'];
+  const phones = ['+91-98765-43210', '+91-87654-32109', '+91-76543-21098', '+91-65432-10987', '+91-54321-09876'];
   return placeOrder(
     tableNum,
     selectedItems,

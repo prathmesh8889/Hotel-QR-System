@@ -54,8 +54,24 @@ export default function CustomerFlow() {
     );
   }
 
+  const [phoneError, setPhoneError] = useState('');
+
+  const validatePhone = (phone: string): boolean => {
+    // Indian phone number validation: +91 followed by 10 digits, or just 10 digits
+    const phoneRegex = /^(\+91[-\s]?)?[6-9]\d{9}$/;
+    const cleanPhone = phone.replace(/[-\s]/g, '');
+    return phoneRegex.test(cleanPhone) || /^\d{10}$/.test(cleanPhone);
+  };
+
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validatePhone(customerPhone)) {
+      setPhoneError('Please enter a valid 10-digit Indian phone number');
+      return;
+    }
+    
+    setPhoneError('');
     setStep('menu');
   };
 
@@ -140,12 +156,20 @@ export default function CustomerFlow() {
                   <input
                     type="tel"
                     value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm"
-                    placeholder="Enter your phone number"
+                    onChange={(e) => {
+                      setCustomerPhone(e.target.value);
+                      if (phoneError) setPhoneError('');
+                    }}
+                    className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm ${
+                      phoneError ? 'border-red-500' : 'border-gray-200'
+                    }`}
+                    placeholder="+91 98765 43210"
                     required
                   />
                 </div>
+                {phoneError && (
+                  <p className="mt-1 text-xs text-red-600">{phoneError}</p>
+                )}
               </div>
 
               <button

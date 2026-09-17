@@ -28,7 +28,7 @@ export default function DashboardPage() {
   }, []);
 
   const statCards = [
-    { title: "Today's Revenue", value: `$${stats.todayRevenue.toFixed(2)}`, icon: DollarSign, color: 'emerald' },
+    { title: "Today's Revenue", value: `₹${stats.todayRevenue.toFixed(2)}`, icon: DollarSign, color: 'emerald' },
     { title: 'Total Orders', value: stats.totalOrders.toString(), icon: ShoppingBag, color: 'indigo' },
     { title: 'Active Tables', value: `${stats.occupiedTables}/${stats.totalTables}`, icon: Users, color: 'amber' },
     { title: 'Pending Orders', value: stats.pendingOrders.toString(), icon: Clock, color: 'red' },
@@ -104,7 +104,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-semibold text-slate-800 text-sm">${order.totalAmount.toFixed(2)}</span>
+                  <span className="font-semibold text-slate-800 text-sm">₹{order.totalAmount.toFixed(2)}</span>
                   <OrderStatusBadge status={order.status} />
                 </div>
               </div>

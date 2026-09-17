@@ -123,7 +123,7 @@ export default function KitchenPage() {
                       </div>
                     )}
                     <div className="flex items-center justify-between pt-3 border-t">
-                      <span className="font-bold text-slate-800">${order.totalAmount.toFixed(2)}</span>
+                      <span className="font-bold text-slate-800">₹{order.totalAmount.toFixed(2)}</span>
                       <button
                         onClick={() => handleMarkReady(order.id)}
                         className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition"
@@ -174,7 +174,7 @@ export default function KitchenPage() {
                       </div>
                     )}
                     <div className="flex items-center justify-between pt-3 border-t">
-                      <span className="font-bold text-slate-800">${order.totalAmount.toFixed(2)}</span>
+                      <span className="font-bold text-slate-800">₹{order.totalAmount.toFixed(2)}</span>
                       <button
                         onClick={() => handleMarkReady(order.id)}
                         className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium rounded-lg transition"
@@ -220,7 +220,7 @@ export default function KitchenPage() {
                       ))}
                     </div>
                     <div className="flex items-center justify-between pt-3 border-t">
-                      <span className="font-bold text-slate-800">${order.totalAmount.toFixed(2)}</span>
+                      <span className="font-bold text-slate-800">₹{order.totalAmount.toFixed(2)}</span>
                       <button
                         onClick={() => handleMarkServed(order.id)}
                         className="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-xs font-medium rounded-lg transition"

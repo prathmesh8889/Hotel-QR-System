@@ -9,22 +9,22 @@ const STORAGE_KEYS = {
 };
 
 const defaultMenuItems: MenuItem[] = [
-  { id: '1', name: 'Classic Burger', description: 'Juicy beef patty with lettuce, tomato, and special sauce', price: 12.99, category: 'Main Course', imageUrl: '🍔', available: true },
-  { id: '2', name: 'Caesar Salad', description: 'Fresh romaine lettuce with parmesan and croutons', price: 8.99, category: 'Starters', imageUrl: '🥗', available: true },
-  { id: '3', name: 'Margherita Pizza', description: 'Classic pizza with mozzarella, tomato, and basil', price: 14.99, category: 'Main Course', imageUrl: '🍕', available: true },
-  { id: '4', name: 'Grilled Salmon', description: 'Fresh Atlantic salmon with lemon butter sauce', price: 22.99, category: 'Main Course', imageUrl: '🐟', available: true },
-  { id: '5', name: 'French Fries', description: 'Crispy golden fries with sea salt', price: 5.99, category: 'Sides', imageUrl: '🍟', available: true },
-  { id: '6', name: 'Chicken Wings', description: 'Spicy buffalo wings with ranch dip', price: 10.99, category: 'Starters', imageUrl: '🍗', available: true },
-  { id: '7', name: 'Chocolate Cake', description: 'Rich dark chocolate layer cake', price: 7.99, category: 'Desserts', imageUrl: '🍰', available: true },
-  { id: '8', name: 'Fresh Lemonade', description: 'Hand-squeezed lemonade with mint', price: 4.99, category: 'Beverages', imageUrl: '🍋', available: true },
-  { id: '9', name: 'Iced Coffee', description: 'Cold brew coffee with cream', price: 5.49, category: 'Beverages', imageUrl: '☕', available: true },
-  { id: '10', name: 'Pasta Carbonara', description: 'Creamy pasta with bacon and parmesan', price: 15.99, category: 'Main Course', imageUrl: '🍝', available: true },
-  { id: '11', name: 'Mushroom Soup', description: 'Creamy wild mushroom soup with herbs', price: 6.99, category: 'Starters', imageUrl: '🍄', available: true },
-  { id: '12', name: 'Tiramisu', description: 'Classic Italian coffee-flavored dessert', price: 8.99, category: 'Desserts', imageUrl: '🍮', available: true },
-  { id: '13', name: 'Mojito', description: 'Classic Cuban cocktail with fresh mint', price: 9.99, category: 'Beverages', imageUrl: '🍸', available: true },
-  { id: '14', name: 'Bruschetta', description: 'Toasted bread with tomatoes, garlic, and basil', price: 7.99, category: 'Starters', imageUrl: '🥖', available: true },
-  { id: '15', name: 'Onion Rings', description: 'Crispy battered onion rings with dipping sauce', price: 6.49, category: 'Sides', imageUrl: '🧅', available: true },
-  { id: '16', name: 'Ice Cream Sundae', description: 'Three scoops with chocolate sauce and whipped cream', price: 6.99, category: 'Desserts', imageUrl: '🍨', available: true },
+  { id: '1', name: 'Classic Burger', description: 'Juicy beef patty with lettuce, tomato, and special sauce', price: 249, category: 'Main Course', imageUrl: '🍔', available: true },
+  { id: '2', name: 'Caesar Salad', description: 'Fresh romaine lettuce with parmesan and croutons', price: 189, category: 'Starters', imageUrl: '🥗', available: true },
+  { id: '3', name: 'Margherita Pizza', description: 'Classic pizza with mozzarella, tomato, and basil', price: 349, category: 'Main Course', imageUrl: '🍕', available: true },
+  { id: '4', name: 'Grilled Salmon', description: 'Fresh Atlantic salmon with lemon butter sauce', price: 599, category: 'Main Course', imageUrl: '🐟', available: true },
+  { id: '5', name: 'French Fries', description: 'Crispy golden fries with sea salt', price: 149, category: 'Sides', imageUrl: '🍟', available: true },
+  { id: '6', name: 'Chicken Wings', description: 'Spicy buffalo wings with ranch dip', price: 299, category: 'Starters', imageUrl: '🍗', available: true },
+  { id: '7', name: 'Chocolate Cake', description: 'Rich dark chocolate layer cake', price: 199, category: 'Desserts', imageUrl: '🍰', available: true },
+  { id: '8', name: 'Fresh Lemonade', description: 'Hand-squeezed lemonade with mint', price: 129, category: 'Beverages', imageUrl: '🍋', available: true },
+  { id: '9', name: 'Iced Coffee', description: 'Cold brew coffee with cream', price: 149, category: 'Beverages', imageUrl: '☕', available: true },
+  { id: '10', name: 'Pasta Carbonara', description: 'Creamy pasta with bacon and parmesan', price: 399, category: 'Main Course', imageUrl: '🍝', available: true },
+  { id: '11', name: 'Mushroom Soup', description: 'Creamy wild mushroom soup with herbs', price: 179, category: 'Starters', imageUrl: '🍄', available: true },
+  { id: '12', name: 'Tiramisu', description: 'Classic Italian coffee-flavored dessert', price: 249, category: 'Desserts', imageUrl: '🍮', available: true },
+  { id: '13', name: 'Mojito', description: 'Classic Cuban cocktail with fresh mint', price: 279, category: 'Beverages', imageUrl: '🍸', available: true },
+  { id: '14', name: 'Bruschetta', description: 'Toasted bread with tomatoes, garlic, and basil', price: 199, category: 'Starters', imageUrl: '🥖', available: true },
+  { id: '15', name: 'Onion Rings', description: 'Crispy battered onion rings with dipping sauce', price: 169, category: 'Sides', imageUrl: '🧅', available: true },
+  { id: '16', name: 'Ice Cream Sundae', description: 'Three scoops with chocolate sauce and whipped cream', price: 199, category: 'Desserts', imageUrl: '🍨', available: true },
 ];
 
 const defaultTables: Table[] = Array.from({ length: 10 }, (_, i) => ({
@@ -33,7 +33,7 @@ const defaultTables: Table[] = Array.from({ length: 10 }, (_, i) => ({
 
 const defaultSettings: HotelSettings = {
   name: 'The Grand Kitchen', address: '123 Culinary Street, Food District',
-  phone: '+1 (555) 123-4567', currency: '$', taxRate: 10,
+  phone: '+1 (555) 123-4567', currency: '₹', taxRate: 18,
 };
 
 function initializeData() {

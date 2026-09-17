@@ -321,7 +321,7 @@ function KanbanColumn({
 
                 {/* Footer */}
                 <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                  <span className="font-bold text-slate-800 text-sm">${order.totalAmount.toFixed(2)}</span>
+                  <span className="font-bold text-slate-800 text-sm">₹{order.totalAmount.toFixed(2)}</span>
                   <div className="flex items-center gap-1">
                     {isAdmin && adminActions(order)}
                     {actionButton(order)}

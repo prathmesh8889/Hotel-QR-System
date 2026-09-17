@@ -191,7 +191,7 @@ export default function CustomerFlow() {
                     <h3 className="font-semibold text-gray-800 text-sm">{item.name}</h3>
                     <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.description}</p>
                     <div className="flex items-center justify-between mt-3">
-                      <span className="font-bold text-orange-600">${item.price.toFixed(2)}</span>
+                      <span className="font-bold text-orange-600">₹{item.price.toFixed(2)}</span>
                       {qty === 0 ? (
                         <button
                           onClick={() => addToCart(item)}
@@ -236,7 +236,7 @@ export default function CustomerFlow() {
                   <ShoppingBag className="text-orange-600" size={20} />
                   <span className="font-medium text-gray-800">{cartCount} items</span>
                 </div>
-                <span className="font-bold text-orange-600 text-lg">${cartTotal.toFixed(2)}</span>
+                <span className="font-bold text-orange-600 text-lg">₹{cartTotal.toFixed(2)}</span>
               </div>
               <button
                 onClick={handlePlaceOrder}
@@ -304,11 +304,11 @@ export default function CustomerFlow() {
                       <span className="text-xl">{item.menuItem.imageUrl}</span>
                       <div>
                         <p className="font-medium text-gray-800 text-sm">{item.menuItem.name}</p>
-                        <p className="text-xs text-gray-500">Qty: {item.quantity} × ${item.menuItem.price.toFixed(2)}</p>
+                        <p className="text-xs text-gray-500">Qty: {item.quantity} × ₹{item.menuItem.price.toFixed(2)}</p>
                       </div>
                     </div>
                     <span className="font-semibold text-gray-800 text-sm">
-                      ${(item.menuItem.price * item.quantity).toFixed(2)}
+                      ₹{(item.menuItem.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 ))}
@@ -326,15 +326,15 @@ export default function CustomerFlow() {
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="font-semibold">${completedOrder.totalAmount.toFixed(2)}</span>
+                <span className="font-semibold">₹{completedOrder.totalAmount.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-gray-600">Tax ({settings.taxRate}%)</span>
-                <span className="font-semibold">${(completedOrder.totalAmount * settings.taxRate / 100).toFixed(2)}</span>
+                <span className="font-semibold">₹{(completedOrder.totalAmount * settings.taxRate / 100).toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between text-lg font-bold text-gray-800 pt-2 border-t">
                 <span>Total</span>
-                <span className="text-orange-600">${(completedOrder.totalAmount * (1 + settings.taxRate / 100)).toFixed(2)}</span>
+                <span className="text-orange-600">₹{(completedOrder.totalAmount * (1 + settings.taxRate / 100)).toFixed(2)}</span>
               </div>
             </div>
 

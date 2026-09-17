@@ -103,7 +103,7 @@ export default function MenuManagement() {
                   <td className="px-5 py-4 hidden md:table-cell">
                     <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs rounded-full font-medium">{item.category}</span>
                   </td>
-                  <td className="px-5 py-4 font-semibold text-slate-800 text-sm">${item.price.toFixed(2)}</td>
+                  <td className="px-5 py-4 font-semibold text-slate-800 text-sm">₹{item.price.toFixed(2)}</td>
                   <td className="px-5 py-4 text-center">
                     <button onClick={() => handleToggle(item.id)} className="inline-flex transition hover:scale-110">
                       {item.available ? <ToggleRight className="text-emerald-500" size={26} /> : <ToggleLeft className="text-slate-300" size={26} />}

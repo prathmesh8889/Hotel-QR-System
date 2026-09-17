@@ -1,3 +1,11 @@
+export type UserRole = 'admin' | 'kitchen' | null;
+
+export interface AuthState {
+  isLoggedIn: boolean;
+  role: UserRole;
+  username: string;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -8,11 +16,13 @@ export interface MenuItem {
   available: boolean;
 }
 
+export type TableStatus = 'available' | 'occupied' | 'dirty' | 'reserved';
+
 export interface Table {
   id: string;
   number: number;
   qrCode: string;
-  status: 'available' | 'occupied';
+  status: TableStatus;
 }
 
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'served' | 'paid';
@@ -35,4 +45,12 @@ export interface Order {
 export interface CartItem {
   menuItem: MenuItem;
   quantity: number;
+}
+
+export interface HotelSettings {
+  name: string;
+  address: string;
+  phone: string;
+  currency: string;
+  taxRate: number;
 }

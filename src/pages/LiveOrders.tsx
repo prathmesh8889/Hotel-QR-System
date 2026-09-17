@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getOrders, updateOrderStatus, subscribeToOrders, playOrderAlert } from '../store';
+import { getOrders, updateOrderStatus, subscribe, notify, playOrderAlert } from '../store';
 import { Order } from '../types';
 import { OrderStatusBadge } from '../components/UI/StatusBadge';
 import { PageLoader } from '../components/UI/LoadingSkeleton';
@@ -19,21 +19,17 @@ export default function LiveOrders() {
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   useEffect(() => {
-    // Initial fetch
-    const fetchOrders = async () => {
-      const allOrders = await getOrders();
+    setTimeout(() => {
+      const allOrders = getOrders();
       setOrders(allOrders.filter((o) => ['pending', 'preparing', 'ready'].includes(o.status)));
       prevOrderIdsRef.current = new Set(allOrders.map((o) => o.id));
       setLoading(false);
-    };
-    
-    fetchOrders();
+    }, 500);
 
-    // Subscribe to real-time updates
-    const subscription = subscribeToOrders(async (allOrders) => {
+    const unsub = subscribe(() => {
+      const allOrders = getOrders();
       const active = allOrders.filter((o) => ['pending', 'preparing', 'ready'].includes(o.status));
       
-      // Detect new orders
       const currentIds = new Set(allOrders.map((o) => o.id));
       const newIds = new Set<string>();
       currentIds.forEach((id) => {
@@ -50,32 +46,40 @@ export default function LiveOrders() {
       setOrders(active);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    const interval = setInterval(() => {
+      const allOrders = getOrders();
+      setOrders(allOrders.filter((o) => ['pending', 'preparing', 'ready'].includes(o.status)));
+    }, 2000);
+
+    return () => { unsub(); clearInterval(interval); };
   }, [soundEnabled]);
 
-  const handleStartCooking = async (orderId: string) => {
-    await updateOrderStatus(orderId, 'preparing');
+  const handleStartCooking = (orderId: string) => {
+    updateOrderStatus(orderId, 'preparing');
+    notify();
   };
 
-  const handleMarkReady = async (orderId: string) => {
-    await updateOrderStatus(orderId, 'ready');
+  const handleMarkReady = (orderId: string) => {
+    updateOrderStatus(orderId, 'ready');
+    notify();
   };
 
-  const handleMarkServed = async (orderId: string) => {
-    await updateOrderStatus(orderId, 'served');
+  const handleMarkServed = (orderId: string) => {
+    updateOrderStatus(orderId, 'served');
+    notify();
   };
 
-  const handleCancelOrder = async (orderId: string) => {
+  const handleCancelOrder = (orderId: string) => {
     if (confirm('Cancel this order?')) {
-      await updateOrderStatus(orderId, 'cancelled');
+      updateOrderStatus(orderId, 'cancelled');
+      notify();
     }
   };
 
-  const handleMarkPaid = async (orderId: string) => {
+  const handleMarkPaid = (orderId: string) => {
     if (confirm('Mark this order as paid? This will free up the table.')) {
-      await updateOrderStatus(orderId, 'paid');
+      updateOrderStatus(orderId, 'paid');
+      notify();
     }
   };
 
@@ -90,7 +94,7 @@ export default function LiveOrders() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <p className="text-slate-500 text-sm">
-            {orders.length} active orders • Real-time updates via Supabase
+            {orders.length} active orders • Real-time updates
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -277,6 +281,9 @@ function KanbanColumn({
                     <div>
                       <p className="font-semibold text-slate-800 text-sm">Table {order.tableNumber}</p>
                       <p className="text-xs text-slate-500">{elapsed}m ago • #{order.id.slice(-6)}</p>
+                      {order.customerName && (
+                        <p className="text-xs text-slate-400">{order.customerName} • {order.customerPhone}</p>
+                      )}
                     </div>
                   </div>
                   {isNew && (

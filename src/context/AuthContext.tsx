@@ -11,7 +11,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 const STORAGE_KEY = 'hotel_auth_state';
 
 function getStoredAuth(): AuthState {
@@ -26,18 +25,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [auth, setAuth] = useState<AuthState>(getStoredAuth);
 
   const login = useCallback((username: string, password: string, role: UserRole): boolean => {
-    // Validate against staff list
     const staffList = getStaff();
-    const staffMember = staffList.find(
-      (s) => s.username === username && s.password === password && s.active
-    );
+    const staffMember = staffList.find((s) => s.username === username && s.password === password && s.active);
 
     if (staffMember && staffMember.role === role) {
-      const newState: AuthState = {
-        isLoggedIn: true,
-        role: staffMember.role,
-        username: staffMember.username,
-      };
+      const newState: AuthState = { isLoggedIn: true, role: staffMember.role, username: staffMember.username };
       setAuth(newState);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
       return true;
@@ -52,15 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider
-      value={{
-        auth,
-        login,
-        logout,
-        isAdmin: auth.role === 'admin',
-        isKitchen: auth.role === 'kitchen',
-      }}
-    >
+    <AuthContext.Provider value={{ auth, login, logout, isAdmin: auth.role === 'admin', isKitchen: auth.role === 'kitchen' }}>
       {children}
     </AuthContext.Provider>
   );

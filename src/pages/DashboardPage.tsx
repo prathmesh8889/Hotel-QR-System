@@ -54,7 +54,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => <SkeletonStat key={i} />)
@@ -75,7 +74,6 @@ export default function DashboardPage() {
             })}
       </div>
 
-      {/* Recent Orders */}
       <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
           <h2 className="font-semibold text-slate-800">Recent Orders</h2>
@@ -97,6 +95,7 @@ export default function DashboardPage() {
                   <div>
                     <p className="font-medium text-slate-800 text-sm">
                       {order.items.length} items • Table {order.tableNumber}
+                      {order.customerName && <span className="text-slate-500"> • {order.customerName}</span>}
                     </p>
                     <p className="text-xs text-slate-500">
                       {new Date(order.timestamp).toLocaleTimeString()} • #{order.id.slice(-6)}

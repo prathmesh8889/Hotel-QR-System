@@ -1,10 +1,11 @@
-import { MenuItem, Table, TableStatus, Order, OrderStatus, HotelSettings } from './types';
+import { MenuItem, Table, TableStatus, Order, OrderStatus, HotelSettings, Staff, UserRole } from './types';
 
 const STORAGE_KEYS = {
   MENU: 'hotel_menu_v3',
   TABLES: 'hotel_tables_v3',
   ORDERS: 'hotel_orders_v3',
   SETTINGS: 'hotel_settings_v3',
+  STAFF: 'hotel_staff_v3',
 };
 
 const defaultMenuItems: MenuItem[] = [
@@ -129,15 +130,29 @@ export function getActiveOrders(): Order[] {
   return getOrders().filter((o) => ['pending', 'preparing', 'ready'].includes(o.status));
 }
 
-export function placeOrder(tableNumber: number, items: Order['items'], totalAmount: number, customerNote?: string): Order {
+export function placeOrder(
+  tableNumber: number,
+  items: Order['items'],
+  totalAmount: number,
+  customerName: string,
+  customerPhone: string,
+  customerNote?: string
+): Order {
   const orders = getOrders();
   const newOrder: Order = {
-    id: `ORD-${Date.now()}`, tableNumber, items, totalAmount,
-    status: 'pending', timestamp: Date.now(), customerNote,
+    id: `ORD-${Date.now()}`,
+    tableNumber,
+    customerName,
+    customerPhone,
+    items,
+    totalAmount,
+    status: 'pending',
+    timestamp: Date.now(),
+    customerNote,
   };
   orders.unshift(newOrder);
   localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
-
+  
   const tables = getTables();
   const tableIndex = tables.findIndex((t) => t.number === tableNumber);
   if (tableIndex !== -1) {
@@ -147,7 +162,6 @@ export function placeOrder(tableNumber: number, items: Order['items'], totalAmou
   notifyListeners();
   return newOrder;
 }
-
 export function updateOrderStatus(orderId: string, status: OrderStatus): Order | null {
   const orders = getOrders();
   const index = orders.findIndex((o) => o.id === orderId);
@@ -185,7 +199,16 @@ export function simulateNewOrder(): Order {
     ? occupiedTables[Math.floor(Math.random() * occupiedTables.length)].number
     : tables[Math.floor(Math.random() * tables.length)].number;
   const notes = ['', 'No onions please', 'Extra spicy!', 'Allergic to nuts', 'Well done', ''];
-  return placeOrder(tableNum, selectedItems, total, notes[Math.floor(Math.random() * notes.length)] || undefined);
+  const names = ['John Smith', 'Sarah Johnson', 'Mike Davis', 'Emily Brown', 'David Wilson'];
+  const phones = ['+1-555-0101', '+1-555-0102', '+1-555-0103', '+1-555-0104', '+1-555-0105'];
+  return placeOrder(
+    tableNum,
+    selectedItems,
+    total,
+    names[Math.floor(Math.random() * names.length)],
+    phones[Math.floor(Math.random() * phones.length)],
+    notes[Math.floor(Math.random() * notes.length)] || undefined
+  );
 }
 
 // ============ SETTINGS ============
@@ -199,6 +222,78 @@ export function updateSettings(settings: Partial<HotelSettings>): HotelSettings 
   const updated = { ...current, ...settings };
   localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated));
   return updated;
+}
+
+// ============ STAFF MANAGEMENT ============
+const defaultStaff: Staff[] = [
+  {
+    id: 'staff-1',
+    name: 'Admin User',
+    username: 'admin',
+    password: 'admin123',
+    role: 'admin',
+    phone: '+1-555-0001',
+    email: 'admin@hotel.com',
+    active: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'staff-2',
+    name: 'Kitchen Staff',
+    username: 'kitchen',
+    password: 'kitchen123',
+    role: 'kitchen',
+    phone: '+1-555-0002',
+    email: 'kitchen@hotel.com',
+    active: true,
+    createdAt: Date.now(),
+  },
+];
+
+export function getStaff(): Staff[] {
+  const data = localStorage.getItem(STORAGE_KEYS.STAFF);
+  if (!data) {
+    localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(defaultStaff));
+    return defaultStaff;
+  }
+  return JSON.parse(data);
+}
+
+export function addStaff(staff: Omit<Staff, 'id' | 'createdAt'>): Staff {
+  const staffList = getStaff();
+  const newStaff: Staff = {
+    ...staff,
+    id: `staff-${Date.now()}`,
+    createdAt: Date.now(),
+  };
+  staffList.push(newStaff);
+  localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(staffList));
+  return newStaff;
+}
+
+export function updateStaff(id: string, updates: Partial<Staff>): Staff | null {
+  const staffList = getStaff();
+  const index = staffList.findIndex((s) => s.id === id);
+  if (index === -1) return null;
+  staffList[index] = { ...staffList[index], ...updates };
+  localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(staffList));
+  return staffList[index];
+}
+
+export function deleteStaff(id: string): boolean {
+  const staffList = getStaff();
+  const filtered = staffList.filter((s) => s.id !== id);
+  localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(filtered));
+  return filtered.length < staffList.length;
+}
+
+export function toggleStaffStatus(id: string): Staff | null {
+  const staffList = getStaff();
+  const index = staffList.findIndex((s) => s.id === id);
+  if (index === -1) return null;
+  staffList[index].active = !staffList[index].active;
+  localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(staffList));
+  return staffList[index];
 }
 
 // ============ STATS ============

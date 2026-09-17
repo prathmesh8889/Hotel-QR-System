@@ -1,9 +1,21 @@
-export type UserRole = 'admin' | 'kitchen';
+export type UserRole = 'admin' | 'kitchen' | 'waiter';
 
 export interface AuthState {
   isLoggedIn: boolean;
   role: UserRole | null;
   username: string;
+}
+
+export interface Staff {
+  id: string;
+  name: string;
+  username: string;
+  password: string;
+  role: UserRole;
+  phone: string;
+  email: string;
+  active: boolean;
+  createdAt: number;
 }
 
 export interface MenuItem {
@@ -35,11 +47,18 @@ export interface OrderItem {
 export interface Order {
   id: string;
   tableNumber: number;
+  customerName: string;
+  customerPhone: string;
   items: OrderItem[];
   totalAmount: number;
   status: OrderStatus;
   timestamp: number;
   customerNote?: string;
+}
+
+export interface CartItem {
+  menuItem: MenuItem;
+  quantity: number;
 }
 
 export interface HotelSettings {

@@ -9,6 +9,8 @@ import {
   X,
   ChevronRight,
   Settings,
+  Users,
+  ChefHat,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -24,8 +26,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', show: true },
     { to: '/live-orders', icon: ClipboardList, label: 'Live Orders', show: true },
+    { to: '/kitchen', icon: ChefHat, label: 'Kitchen', show: isAdmin },
     { to: '/menu-management', icon: UtensilsCrossed, label: 'Menu Management', show: isAdmin },
     { to: '/table-management', icon: Table2, label: 'Tables & QR Codes', show: isAdmin },
+    { to: '/staff', icon: Users, label: 'Staff Management', show: isAdmin },
     { to: '/settings', icon: Settings, label: 'Settings', show: isAdmin },
   ];
 

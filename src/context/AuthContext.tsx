@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { AuthState, UserRole } from '../types';
+import { getStaff } from '../store';
 
 interface AuthContextType {
   auth: AuthState;
@@ -25,15 +26,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [auth, setAuth] = useState<AuthState>(getStoredAuth);
 
   const login = useCallback((username: string, password: string, role: UserRole): boolean => {
-    // Simulated credentials
-    const validCredentials: Record<string, { password: string; role: UserRole }> = {
-      admin: { password: 'admin123', role: 'admin' },
-      kitchen: { password: 'kitchen123', role: 'kitchen' },
-    };
+    // Validate against staff list
+    const staffList = getStaff();
+    const staffMember = staffList.find(
+      (s) => s.username === username && s.password === password && s.active
+    );
 
-    const cred = validCredentials[username];
-    if (cred && cred.password === password && (role === null || cred.role === role)) {
-      const newState: AuthState = { isLoggedIn: true, role: cred.role, username };
+    if (staffMember && staffMember.role === role) {
+      const newState: AuthState = {
+        isLoggedIn: true,
+        role: staffMember.role,
+        username: staffMember.username,
+      };
       setAuth(newState);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
       return true;

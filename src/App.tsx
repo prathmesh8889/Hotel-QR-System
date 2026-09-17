@@ -8,9 +8,12 @@ import ProtectedLayout from './components/Layout/ProtectedLayout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import LiveOrders from './pages/LiveOrders';
+import KitchenPage from './pages/KitchenPage';
 import MenuManagement from './pages/MenuManagement';
 import TableManagement from './pages/TableManagement';
+import StaffManagement from './pages/StaffManagement';
 import SettingsPage from './pages/SettingsPage';
+import CustomerFlow from './pages/CustomerFlow';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
   const { auth } = useAuth();
@@ -46,6 +49,14 @@ function AppRoutes() {
 
         {/* Admin-only routes */}
         <Route
+          path="/kitchen"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <KitchenPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/menu-management"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
@@ -62,6 +73,14 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/staff"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <StaffManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/settings"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
@@ -70,6 +89,9 @@ function AppRoutes() {
           }
         />
       </Route>
+
+      {/* Customer Flow (QR Code Scan) */}
+      <Route path="/menu" element={<CustomerFlow />} />
 
       {/* Catch-all redirect */}
       <Route path="*" element={<Navigate to="/login" replace />} />

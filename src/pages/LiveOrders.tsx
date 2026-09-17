@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getOrders, updateOrderStatus, subscribe, notify, playOrderAlert } from '../store';
+import { getOrders, updateOrderStatus, subscribeToOrders, playOrderAlert } from '../store';
 import { Order } from '../types';
 import { OrderStatusBadge } from '../components/UI/StatusBadge';
 import { PageLoader } from '../components/UI/LoadingSkeleton';
@@ -19,15 +19,18 @@ export default function LiveOrders() {
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   useEffect(() => {
-    setTimeout(() => {
-      const allOrders = getOrders();
+    // Initial fetch
+    const fetchOrders = async () => {
+      const allOrders = await getOrders();
       setOrders(allOrders.filter((o) => ['pending', 'preparing', 'ready'].includes(o.status)));
       prevOrderIdsRef.current = new Set(allOrders.map((o) => o.id));
       setLoading(false);
-    }, 500);
+    };
+    
+    fetchOrders();
 
-    const unsub = subscribe(() => {
-      const allOrders = getOrders();
+    // Subscribe to real-time updates
+    const subscription = subscribeToOrders(async (allOrders) => {
       const active = allOrders.filter((o) => ['pending', 'preparing', 'ready'].includes(o.status));
       
       // Detect new orders
@@ -47,40 +50,32 @@ export default function LiveOrders() {
       setOrders(active);
     });
 
-    const interval = setInterval(() => {
-      const allOrders = getOrders();
-      setOrders(allOrders.filter((o) => ['pending', 'preparing', 'ready'].includes(o.status)));
-    }, 2000);
-
-    return () => { unsub(); clearInterval(interval); };
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [soundEnabled]);
 
-  const handleStartCooking = (orderId: string) => {
-    updateOrderStatus(orderId, 'preparing');
-    notify();
+  const handleStartCooking = async (orderId: string) => {
+    await updateOrderStatus(orderId, 'preparing');
   };
 
-  const handleMarkReady = (orderId: string) => {
-    updateOrderStatus(orderId, 'ready');
-    notify();
+  const handleMarkReady = async (orderId: string) => {
+    await updateOrderStatus(orderId, 'ready');
   };
 
-  const handleMarkServed = (orderId: string) => {
-    updateOrderStatus(orderId, 'served');
-    notify();
+  const handleMarkServed = async (orderId: string) => {
+    await updateOrderStatus(orderId, 'served');
   };
 
-  const handleCancelOrder = (orderId: string) => {
+  const handleCancelOrder = async (orderId: string) => {
     if (confirm('Cancel this order?')) {
-      updateOrderStatus(orderId, 'cancelled');
-      notify();
+      await updateOrderStatus(orderId, 'cancelled');
     }
   };
 
-  const handleMarkPaid = (orderId: string) => {
+  const handleMarkPaid = async (orderId: string) => {
     if (confirm('Mark this order as paid? This will free up the table.')) {
-      updateOrderStatus(orderId, 'paid');
-      notify();
+      await updateOrderStatus(orderId, 'paid');
     }
   };
 
@@ -92,11 +87,10 @@ export default function LiveOrders() {
 
   return (
     <div className="space-y-4">
-      {/* Header with controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <p className="text-slate-500 text-sm">
-            {orders.length} active orders • Real-time updates via Socket.io simulation
+            {orders.length} active orders • Real-time updates via Supabase
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -116,9 +110,7 @@ export default function LiveOrders() {
         </div>
       </div>
 
-      {/* Kanban Board */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Column: New Orders */}
         <KanbanColumn
           title="New Orders"
           count={pendingOrders.length}
@@ -146,7 +138,6 @@ export default function LiveOrders() {
           )}
         />
 
-        {/* Column: Preparing */}
         <KanbanColumn
           title="Preparing"
           count={preparingOrders.length}
@@ -174,7 +165,6 @@ export default function LiveOrders() {
           )}
         />
 
-        {/* Column: Ready */}
         <KanbanColumn
           title="Ready to Serve"
           count={readyOrders.length}
@@ -211,7 +201,6 @@ export default function LiveOrders() {
         />
       </div>
 
-      {/* Empty State */}
       {orders.length === 0 && (
         <div className="text-center py-16 bg-white rounded-xl border">
           <ChefHat className="text-slate-300 mx-auto mb-4" size={48} />
@@ -227,7 +216,6 @@ export default function LiveOrders() {
   );
 }
 
-// Kanban Column Component
 function KanbanColumn({
   title, count, icon, color, orders, newOrderIds, isAdmin, actionButton, adminActions,
 }: {
@@ -251,7 +239,6 @@ function KanbanColumn({
 
   return (
     <div className={`rounded-xl border ${colors.border} overflow-hidden`}>
-      {/* Column Header */}
       <div className={`${colors.header} px-4 py-3 flex items-center justify-between border-b ${colors.border}`}>
         <div className="flex items-center gap-2">
           {icon}
@@ -266,12 +253,9 @@ function KanbanColumn({
         </span>
       </div>
 
-      {/* Orders */}
       <div className={`${colors.bg} p-3 space-y-3 min-h-[200px] max-h-[calc(100vh-280px)] overflow-y-auto`}>
         {orders.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 text-sm">
-            No orders
-          </div>
+          <div className="text-center py-8 text-slate-400 text-sm">No orders</div>
         ) : (
           orders.map((order) => {
             const isNew = newOrderIds.has(order.id);
@@ -285,7 +269,6 @@ function KanbanColumn({
                   isNew ? 'border-indigo-400 ring-2 ring-indigo-200 animate-pulse' : 'border-gray-100'
                 } ${isDelayed ? 'border-red-300' : ''}`}
               >
-                {/* Order Header */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
@@ -293,19 +276,14 @@ function KanbanColumn({
                     </div>
                     <div>
                       <p className="font-semibold text-slate-800 text-sm">Table {order.tableNumber}</p>
-                      <p className="text-xs text-slate-500">
-                        {elapsed}m ago • #{order.id.slice(-6)}
-                      </p>
+                      <p className="text-xs text-slate-500">{elapsed}m ago • #{order.id.slice(-6)}</p>
                     </div>
                   </div>
                   {isNew && (
-                    <span className="px-2 py-0.5 bg-indigo-500 text-white text-[10px] font-bold rounded-full animate-bounce">
-                      NEW
-                    </span>
+                    <span className="px-2 py-0.5 bg-indigo-500 text-white text-[10px] font-bold rounded-full animate-bounce">NEW</span>
                   )}
                 </div>
 
-                {/* Items */}
                 <div className="space-y-1 mb-3">
                   {order.items.map((item, idx) => (
                     <div key={idx} className="flex items-center justify-between text-xs">
@@ -318,7 +296,6 @@ function KanbanColumn({
                   ))}
                 </div>
 
-                {/* Note */}
                 {order.customerNote && (
                   <div className="mb-3 p-2 bg-amber-50 border border-amber-100 rounded-lg text-xs text-amber-700 flex items-center gap-1">
                     <AlertTriangle size={10} />
@@ -326,7 +303,6 @@ function KanbanColumn({
                   </div>
                 )}
 
-                {/* Delay Warning */}
                 {isDelayed && (
                   <div className="mb-3 p-2 bg-red-50 border border-red-100 rounded-lg text-xs text-red-600 flex items-center gap-1 font-medium">
                     <Clock size={10} />
@@ -334,7 +310,6 @@ function KanbanColumn({
                   </div>
                 )}
 
-                {/* Footer */}
                 <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                   <span className="font-bold text-slate-800 text-sm">₹{order.totalAmount.toFixed(2)}</span>
                   <div className="flex items-center gap-1">

@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { UserRole } from '../types';
-import { Lock, User, AlertCircle, Shield, ChefHat, Eye, EyeOff } from 'lucide-react';
+import { Lock, User, AlertCircle, Shield, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('admin');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,7 +18,7 @@ export default function LoginPage() {
     setError('');
 
     setTimeout(() => {
-      if (login(username, password, role)) {
+      if (login(username, password, 'admin')) {
         navigate('/dashboard');
       } else {
         setError('Invalid credentials. Please check the demo credentials below.');
@@ -54,37 +52,6 @@ export default function LoginPage() {
           <div className="mb-6">
             <h2 className="text-xl font-bold text-slate-800">Welcome Back</h2>
             <p className="text-slate-500 text-sm mt-1">Sign in to access the management panel</p>
-          </div>
-
-          {/* Role Selector */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-slate-700 mb-2">Login As</label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setRole('admin')}
-                className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 transition-all ${
-                  role === 'admin'
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                }`}
-              >
-                <Shield size={18} />
-                <span className="font-medium text-sm">Admin</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole('kitchen')}
-                className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 transition-all ${
-                  role === 'kitchen'
-                    ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                }`}
-              >
-                <ChefHat size={18} />
-                <span className="font-medium text-sm">Kitchen Staff</span>
-              </button>
-            </div>
           </div>
 
           {error && (
@@ -135,11 +102,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3 text-white font-semibold rounded-xl transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
-                role === 'admin'
-                  ? 'bg-indigo-500 hover:bg-indigo-600 shadow-lg shadow-indigo-500/30'
-                  : 'bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/30'
-              }`}
+              className="w-full py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-xl transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/30"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -147,7 +110,7 @@ export default function LoginPage() {
                   Signing in...
                 </span>
               ) : (
-                `Sign In as ${role === 'admin' ? 'Admin' : 'Kitchen Staff'}`
+                'Sign In'
               )}
             </button>
           </form>
@@ -155,21 +118,12 @@ export default function LoginPage() {
           {/* Demo Credentials */}
           <div className="mt-6 p-4 bg-slate-50 rounded-xl">
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Demo Credentials</p>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Shield size={14} className="text-indigo-500" />
-                  <span className="text-sm text-slate-600 font-medium">Admin</span>
-                </div>
-                <code className="text-xs bg-white px-2 py-1 rounded border border-slate-200 text-indigo-600 font-mono">admin / admin123</code>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Shield size={14} className="text-indigo-500" />
+                <span className="text-sm text-slate-600 font-medium">Admin</span>
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ChefHat size={14} className="text-orange-500" />
-                  <span className="text-sm text-slate-600 font-medium">Kitchen</span>
-                </div>
-                <code className="text-xs bg-white px-2 py-1 rounded border border-slate-200 text-orange-600 font-mono">kitchen / kitchen123</code>
-              </div>
+              <code className="text-xs bg-white px-2 py-1 rounded border border-slate-200 text-indigo-600 font-mono">admin / admin123</code>
             </div>
           </div>
         </div>

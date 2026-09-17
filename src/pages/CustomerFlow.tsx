@@ -1,27 +1,68 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getMenuItems, getTables, getSettings, placeOrder, getOrders, subscribe } from '../store';
 import { MenuItem, CartItem, Order, OrderStatus } from '../types';
 import { User, Phone, ShoppingBag, CheckCircle, Receipt, CreditCard, Clock, ChefHat, Truck, MapPin, Star, Shield, ArrowRight, X, Minus, Plus, AlertCircle } from 'lucide-react';
 
 export default function CustomerFlow() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const tableId = searchParams.get('tableId');
 
-  const [step, setStep] = useState<'contact' | 'menu' | 'bill' | 'payment'>('contact');
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
+  // Load saved state from sessionStorage on mount
+  const savedState = sessionStorage.getItem('customer_order_state');
+  const initialState = savedState ? JSON.parse(savedState) : null;
+
+  const [step, setStep] = useState<'contact' | 'menu' | 'bill' | 'payment'>(initialState?.step || 'contact');
+  const [customerName, setCustomerName] = useState(initialState?.customerName || '');
+  const [customerPhone, setCustomerPhone] = useState(initialState?.customerPhone || '');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [customerNote, setCustomerNote] = useState('');
+  const [cart, setCart] = useState<CartItem[]>(initialState?.cart || []);
+  const [customerNote, setCustomerNote] = useState(initialState?.customerNote || '');
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
-  const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
-  const [currentOrderStatus, setCurrentOrderStatus] = useState<OrderStatus | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'card'>('cash');
-  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'completed'>('pending');
+  const [completedOrder, setCompletedOrder] = useState<Order | null>(initialState?.completedOrder || null);
+  const [currentOrderStatus, setCurrentOrderStatus] = useState<OrderStatus | null>(initialState?.currentOrderStatus || null);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'card'>(initialState?.paymentMethod || 'cash');
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'completed'>(initialState?.paymentStatus || 'pending');
   const [activeCategory, setActiveCategory] = useState('All');
   const [showNote, setShowNote] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  // Save state to sessionStorage whenever it changes
+  useEffect(() => {
+    const stateToSave = {
+      step,
+      customerName,
+      customerPhone,
+      cart,
+      customerNote,
+      completedOrder,
+      currentOrderStatus,
+      paymentMethod,
+      paymentStatus,
+    };
+    sessionStorage.setItem('customer_order_state', JSON.stringify(stateToSave));
+  }, [step, customerName, customerPhone, cart, customerNote, completedOrder, currentOrderStatus, paymentMethod, paymentStatus]);
+
+  // Prevent back button navigation
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      if (completedOrder && currentOrderStatus !== 'paid') {
+        // Push state back to prevent going back
+        window.history.pushState(null, '', window.location.href);
+        alert('कृपया पेमेंट पूर्ण करा. Back जाऊ नका.');
+      }
+    };
+
+    // Push initial state to prevent back navigation
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [completedOrder, currentOrderStatus]);
 
   // Prevent refresh/close until payment is complete
   useEffect(() => {
@@ -53,6 +94,7 @@ export default function CustomerFlow() {
       const order = orders.find((o) => o.id === completedOrder.id);
       if (order) {
         setCurrentOrderStatus(order.status);
+        setLastUpdated(new Date());
       }
     };
     
@@ -436,27 +478,48 @@ export default function CustomerFlow() {
           </div>
 
           {/* Real-time Status Card */}
-          <div className={`${statusInfo.bg} ${statusInfo.border} border rounded-2xl p-5 mb-6 shadow-sm`}>
+          <div className={`${statusInfo.bg} ${statusInfo.border} border-2 rounded-2xl p-5 mb-6 shadow-lg relative overflow-hidden`}>
+            {/* Live Indicator */}
+            <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-full shadow-sm">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+              <span className="text-xs font-bold text-red-600">LIVE</span>
+            </div>
+
             <div className="flex items-center gap-4 mb-4">
-              <div className={`w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm`}>
-                <StatusIcon className={statusInfo.color} size={24} />
+              <div className={`w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm`}>
+                <StatusIcon className={statusInfo.color} size={28} />
               </div>
               <div className="flex-1">
-                <p className={`font-bold ${statusInfo.color} text-lg`}>{statusInfo.label}</p>
-                <p className="text-xs text-slate-600">{statusInfo.subtitle}</p>
+                <p className={`font-bold ${statusInfo.color} text-xl`}>{statusInfo.label}</p>
+                <p className="text-sm text-slate-600 mt-0.5">{statusInfo.subtitle}</p>
               </div>
             </div>
-            <div className="w-full bg-white rounded-full h-2.5 overflow-hidden shadow-inner">
+            
+            {/* Progress Bar */}
+            <div className="w-full bg-white rounded-full h-3 overflow-hidden shadow-inner mb-3">
               <div 
-                className={`h-full ${statusInfo.color.replace('text-', 'bg-')} transition-all duration-1000 ease-out rounded-full`}
+                className={`h-full ${statusInfo.color.replace('text-', 'bg-')} transition-all duration-1000 ease-out rounded-full relative`}
                 style={{ width: `${statusInfo.progress}%` }}
-              />
+              >
+                <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+              </div>
             </div>
-            <div className="flex justify-between mt-2 text-xs text-slate-500">
-              <span>Received</span>
-              <span>Preparing</span>
-              <span>Ready</span>
-              <span>Served</span>
+            
+            {/* Progress Steps */}
+            <div className="flex justify-between text-xs font-medium">
+              <span className={currentOrderStatus === 'pending' ? 'text-amber-600 font-bold' : 'text-slate-400'}>Received</span>
+              <span className={currentOrderStatus === 'preparing' ? 'text-blue-600 font-bold' : 'text-slate-400'}>Preparing</span>
+              <span className={currentOrderStatus === 'ready' ? 'text-emerald-600 font-bold' : 'text-slate-400'}>Ready</span>
+              <span className={currentOrderStatus === 'served' || currentOrderStatus === 'paid' ? 'text-purple-600 font-bold' : 'text-slate-400'}>Served</span>
+            </div>
+            
+            {/* Last Updated */}
+            <div className="mt-3 pt-3 border-t border-slate-200/50 flex items-center justify-between text-xs text-slate-500">
+              <span className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                Auto-updating
+              </span>
+              <span>Last updated: {lastUpdated.toLocaleTimeString()}</span>
             </div>
           </div>
 

@@ -1,13 +1,12 @@
 import { MenuItem, Table, TableStatus, Order, OrderStatus, HotelSettings } from './types';
 
 const STORAGE_KEYS = {
-  MENU: 'hotel_menu_v2',
-  TABLES: 'hotel_tables_v2',
-  ORDERS: 'hotel_orders_v2',
-  SETTINGS: 'hotel_settings_v2',
+  MENU: 'hotel_menu_v3',
+  TABLES: 'hotel_tables_v3',
+  ORDERS: 'hotel_orders_v3',
+  SETTINGS: 'hotel_settings_v3',
 };
 
-// Default menu items with more variety
 const defaultMenuItems: MenuItem[] = [
   { id: '1', name: 'Classic Burger', description: 'Juicy beef patty with lettuce, tomato, and special sauce', price: 12.99, category: 'Main Course', imageUrl: '🍔', available: true },
   { id: '2', name: 'Caesar Salad', description: 'Fresh romaine lettuce with parmesan and croutons', price: 8.99, category: 'Starters', imageUrl: '🥗', available: true },
@@ -28,38 +27,23 @@ const defaultMenuItems: MenuItem[] = [
 ];
 
 const defaultTables: Table[] = Array.from({ length: 10 }, (_, i) => ({
-  id: `table-${i + 1}`,
-  number: i + 1,
-  qrCode: `table-${i + 1}`,
-  status: 'available' as TableStatus,
+  id: `table-${i + 1}`, number: i + 1, qrCode: `table-${i + 1}`, status: 'available' as TableStatus,
 }));
 
 const defaultSettings: HotelSettings = {
-  name: 'The Grand Kitchen',
-  address: '123 Culinary Street, Food District',
-  phone: '+1 (555) 123-4567',
-  currency: '$',
-  taxRate: 10,
+  name: 'The Grand Kitchen', address: '123 Culinary Street, Food District',
+  phone: '+1 (555) 123-4567', currency: '$', taxRate: 10,
 };
 
 function initializeData() {
-  if (!localStorage.getItem(STORAGE_KEYS.MENU)) {
-    localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(defaultMenuItems));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.TABLES)) {
-    localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(defaultTables));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
-    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.SETTINGS)) {
-    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(defaultSettings));
-  }
+  if (!localStorage.getItem(STORAGE_KEYS.MENU)) localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(defaultMenuItems));
+  if (!localStorage.getItem(STORAGE_KEYS.TABLES)) localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(defaultTables));
+  if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
+  if (!localStorage.getItem(STORAGE_KEYS.SETTINGS)) localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(defaultSettings));
 }
-
 initializeData();
 
-// ============ MENU OPERATIONS ============
+// ============ MENU ============
 export function getMenuItems(): MenuItem[] {
   const data = localStorage.getItem(STORAGE_KEYS.MENU);
   return data ? JSON.parse(data) : [];
@@ -102,7 +86,7 @@ export function toggleMenuItemAvailability(id: string): MenuItem | null {
   return items[index];
 }
 
-// ============ TABLE OPERATIONS ============
+// ============ TABLES ============
 export function getTables(): Table[] {
   const data = localStorage.getItem(STORAGE_KEYS.TABLES);
   return data ? JSON.parse(data) : [];
@@ -110,12 +94,7 @@ export function getTables(): Table[] {
 
 export function addTable(number: number): Table {
   const tables = getTables();
-  const newTable: Table = {
-    id: `table-${Date.now()}`,
-    number,
-    qrCode: `table-${number}`,
-    status: 'available',
-  };
+  const newTable: Table = { id: `table-${Date.now()}`, number, qrCode: `table-${number}`, status: 'available' };
   tables.push(newTable);
   localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(tables));
   notifyListeners();
@@ -140,7 +119,7 @@ export function updateTableStatus(id: string, status: TableStatus): Table | null
   return tables[index];
 }
 
-// ============ ORDER OPERATIONS ============
+// ============ ORDERS ============
 export function getOrders(): Order[] {
   const data = localStorage.getItem(STORAGE_KEYS.ORDERS);
   return data ? JSON.parse(data) : [];
@@ -153,25 +132,18 @@ export function getActiveOrders(): Order[] {
 export function placeOrder(tableNumber: number, items: Order['items'], totalAmount: number, customerNote?: string): Order {
   const orders = getOrders();
   const newOrder: Order = {
-    id: `ORD-${Date.now()}`,
-    tableNumber,
-    items,
-    totalAmount,
-    status: 'pending',
-    timestamp: Date.now(),
-    customerNote,
+    id: `ORD-${Date.now()}`, tableNumber, items, totalAmount,
+    status: 'pending', timestamp: Date.now(), customerNote,
   };
   orders.unshift(newOrder);
   localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
-  
-  // Update table status
+
   const tables = getTables();
   const tableIndex = tables.findIndex((t) => t.number === tableNumber);
   if (tableIndex !== -1) {
     tables[tableIndex].status = 'occupied';
     localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(tables));
   }
-  
   notifyListeners();
   return newOrder;
 }
@@ -181,8 +153,6 @@ export function updateOrderStatus(orderId: string, status: OrderStatus): Order |
   const index = orders.findIndex((o) => o.id === orderId);
   if (index === -1) return null;
   orders[index].status = status;
-  
-  // If order is paid/served, free up the table
   if (status === 'paid') {
     const order = orders[index];
     const tables = getTables();
@@ -192,10 +162,30 @@ export function updateOrderStatus(orderId: string, status: OrderStatus): Order |
       localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(tables));
     }
   }
-  
   localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
   notifyListeners();
   return orders[index];
+}
+
+// Simulate a new order arriving (for demo/testing)
+export function simulateNewOrder(): Order {
+  const items = getMenuItems().filter((i) => i.available);
+  const numItems = Math.floor(Math.random() * 3) + 1;
+  const selectedItems: Order['items'] = [];
+  for (let i = 0; i < numItems; i++) {
+    const item = items[Math.floor(Math.random() * items.length)];
+    const existing = selectedItems.find((si) => si.menuItem.id === item.id);
+    if (existing) { existing.quantity += 1; }
+    else { selectedItems.push({ menuItem: item, quantity: 1 }); }
+  }
+  const total = selectedItems.reduce((sum, si) => sum + si.menuItem.price * si.quantity, 0);
+  const tables = getTables();
+  const occupiedTables = tables.filter((t) => t.status === 'occupied');
+  const tableNum = occupiedTables.length > 0
+    ? occupiedTables[Math.floor(Math.random() * occupiedTables.length)].number
+    : tables[Math.floor(Math.random() * tables.length)].number;
+  const notes = ['', 'No onions please', 'Extra spicy!', 'Allergic to nuts', 'Well done', ''];
+  return placeOrder(tableNum, selectedItems, total, notes[Math.floor(Math.random() * notes.length)] || undefined);
 }
 
 // ============ SETTINGS ============
@@ -211,33 +201,24 @@ export function updateSettings(settings: Partial<HotelSettings>): HotelSettings 
   return updated;
 }
 
-// ============ DASHBOARD STATS ============
+// ============ STATS ============
 export function getDashboardStats() {
   const orders = getOrders();
   const tables = getTables();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
+  const today = new Date(); today.setHours(0, 0, 0, 0);
   const todayOrders = orders.filter((o) => o.timestamp >= today.getTime());
   const activeOrders = orders.filter((o) => ['pending', 'preparing', 'ready'].includes(o.status));
   const todayRevenue = todayOrders.reduce((sum, o) => sum + o.totalAmount, 0);
   const occupiedTables = tables.filter((t) => t.status === 'occupied').length;
-  
   return {
-    totalOrders: todayOrders.length,
-    activeOrders: activeOrders.length,
-    todayRevenue,
-    occupiedTables,
-    totalTables: tables.length,
+    totalOrders: todayOrders.length, activeOrders: activeOrders.length,
+    todayRevenue, occupiedTables, totalTables: tables.length,
     pendingOrders: orders.filter((o) => o.status === 'pending').length,
   };
 }
 
-// ============ CATEGORIES ============
 export function getCategories(): string[] {
-  const items = getMenuItems();
-  const categories = [...new Set(items.map((item) => item.category))];
-  return categories.sort();
+  return [...new Set(getMenuItems().map((item) => item.category))].sort();
 }
 
 // ============ EVENT SYSTEM (Simulates Socket.io) ============
@@ -253,6 +234,23 @@ function notifyListeners(): void {
   listeners.forEach((listener) => listener());
 }
 
-export function notify(): void {
-  notifyListeners();
+export function notify(): void { notifyListeners(); }
+
+// ============ SOUND ALERT ============
+export function playOrderAlert(): void {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
+  } catch {}
 }

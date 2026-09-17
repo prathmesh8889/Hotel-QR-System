@@ -4,9 +4,9 @@ import { Table, TableStatus } from '../types';
 import { TableStatusBadge } from '../components/UI/StatusBadge';
 import { PageLoader } from '../components/UI/LoadingSkeleton';
 import { QRCodeSVG } from 'qrcode.react';
-import { Plus, Trash2, X, QrCode, Download, Printer, Sparkles } from 'lucide-react';
+import { Plus, Trash2, X, QrCode, Printer } from 'lucide-react';
 
-export default function AdminTablesPage() {
+export default function TableManagement() {
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -45,7 +45,6 @@ export default function AdminTablesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Tables & QR Codes</h1>
@@ -55,13 +54,12 @@ export default function AdminTablesPage() {
           <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-slate-700 font-medium rounded-xl hover:bg-gray-50 transition text-sm">
             <Printer size={16} /> Print All
           </button>
-          <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-xl transition text-sm shadow-sm shadow-indigo-500/20">
+          <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-xl transition text-sm shadow-sm">
             <Plus size={16} /> Add Table
           </button>
         </div>
       </div>
 
-      {/* Add Table Form */}
       {showAdd && (
         <div className="bg-white rounded-xl border p-4">
           <form onSubmit={handleAdd} className="flex items-center gap-3">
@@ -72,14 +70,12 @@ export default function AdminTablesPage() {
         </div>
       )}
 
-      {/* Status Legend */}
       <div className="flex flex-wrap gap-3">
         {(['available', 'occupied', 'dirty', 'reserved'] as TableStatus[]).map((status) => (
           <TableStatusBadge key={status} status={status} size="md" />
         ))}
       </div>
 
-      {/* Tables Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {tables.map((table) => (
           <div key={table.id} className={`bg-white rounded-xl border-2 ${statusColors[table.status]} p-5 hover:shadow-md transition-all`}>
@@ -90,30 +86,22 @@ export default function AdminTablesPage() {
               </div>
               <TableStatusBadge status={table.status} />
             </div>
-
-            {/* QR Code */}
             <div className="flex items-center justify-center p-3 bg-white rounded-xl border border-dashed border-gray-200 mb-4">
               <QRCodeSVG value={`${window.location.origin}/menu?tableId=${table.number}`} size={100} level="M" />
             </div>
-
-            {/* Status Actions */}
             <div className="grid grid-cols-4 gap-1 mb-3">
               {(['available', 'occupied', 'dirty', 'reserved'] as TableStatus[]).map((s) => (
                 <button
                   key={s}
                   onClick={() => handleStatusChange(table.id, s)}
                   className={`px-1 py-1.5 text-[10px] font-medium rounded-md transition ${
-                    table.status === s
-                      ? 'bg-indigo-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    table.status === s ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
                   {s === 'available' ? '✅' : s === 'occupied' ? '👥' : s === 'dirty' ? '🧹' : '📌'}
                 </button>
               ))}
             </div>
-
-            {/* Actions */}
             <div className="flex gap-2">
               <button onClick={() => setSelectedTable(table)} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-medium rounded-lg transition">
                 <QrCode size={14} /> View QR
@@ -130,11 +118,9 @@ export default function AdminTablesPage() {
         <div className="bg-white rounded-xl border p-12 text-center">
           <span className="text-4xl mb-3 block">🪑</span>
           <p className="text-slate-500 font-medium">No tables configured</p>
-          <p className="text-slate-400 text-sm mt-1">Add tables to generate QR codes for customers</p>
         </div>
       )}
 
-      {/* QR Code Modal */}
       {selectedTable && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-2xl">
@@ -149,9 +135,7 @@ export default function AdminTablesPage() {
             <p className="text-xs text-slate-400 mb-4 break-all font-mono bg-gray-50 p-2 rounded">
               {`${window.location.origin}/menu?tableId=${selectedTable.number}`}
             </p>
-            <button onClick={() => setSelectedTable(null)} className="w-full px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition text-sm">
-              Close
-            </button>
+            <button onClick={() => setSelectedTable(null)} className="w-full px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition text-sm">Close</button>
           </div>
         </div>
       )}

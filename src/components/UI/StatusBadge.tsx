@@ -6,6 +6,7 @@ const orderStatusConfig: Record<OrderStatus, { label: string; className: string;
   ready: { label: 'Ready', className: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
   served: { label: 'Served', className: 'bg-purple-50 text-purple-700 border-purple-200', dot: 'bg-purple-500' },
   paid: { label: 'Paid', className: 'bg-slate-50 text-slate-600 border-slate-200', dot: 'bg-slate-400' },
+  cancelled: { label: 'Cancelled', className: 'bg-red-50 text-red-700 border-red-200', dot: 'bg-red-500' },
 };
 
 const tableStatusConfig: Record<TableStatus, { label: string; className: string; dot: string }> = {
@@ -32,20 +33,6 @@ export function TableStatusBadge({ status, size = 'sm' }: { status: TableStatus;
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border font-medium ${config.className} ${sizeClasses}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
-      {config.label}
-    </span>
-  );
-}
-
-export function KitchenStatusBadge({ status, elapsed }: { status: OrderStatus; elapsed: number }) {
-  const isDelayed = status === 'pending' && elapsed > 15;
-  const config = isDelayed
-    ? { label: 'DELAYED', className: 'bg-red-500 text-white', dot: 'bg-white' }
-    : orderStatusConfig[status];
-
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full font-bold px-3 py-1 text-sm ${config.className}`}>
-      <span className={`w-2 h-2 rounded-full ${config.dot} animate-pulse`} />
       {config.label}
     </span>
   );

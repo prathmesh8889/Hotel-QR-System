@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, toggleMenuItemAvailability, getCategories } from '../store';
 import { MenuItem } from '../types';
 import { PageLoader } from '../components/UI/LoadingSkeleton';
-import { Plus, Pencil, Trash2, Search, X, ToggleLeft, ToggleRight, Filter } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, X, ToggleLeft, ToggleRight } from 'lucide-react';
 
-export default function AdminMenuPage() {
+export default function MenuManagement() {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -34,7 +34,8 @@ export default function AdminMenuPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const data = { name: formData.name.trim(), description: formData.description.trim(), price: parseFloat(formData.price), category: formData.category.trim(), imageUrl: formData.imageUrl.trim() || '🍽️', available: formData.available };
-    if (editingItem) { updateMenuItem(editingItem.id, data); } else { addMenuItem(data); }
+    if (editingItem) updateMenuItem(editingItem.id, data);
+    else addMenuItem(data);
     setItems(getMenuItems());
     resetForm();
   };
@@ -46,51 +47,45 @@ export default function AdminMenuPage() {
   const handleToggle = (id: string) => { toggleMenuItemAvailability(id); setItems(getMenuItems()); };
 
   const filteredItems = items.filter((item) => {
-    const matchesCat = categoryFilter === 'All' || item.category === categoryFilter;
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCat && matchesSearch;
+    const matchCat = categoryFilter === 'All' || item.category === categoryFilter;
+    const matchSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchCat && matchSearch;
   });
 
   if (loading) return <PageLoader />;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Menu Management</h1>
           <p className="text-slate-500 text-sm mt-1">{items.length} items • {items.filter(i => i.available).length} available</p>
         </div>
-        <button onClick={() => { resetForm(); setShowForm(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-xl transition text-sm shadow-sm shadow-indigo-500/20">
+        <button onClick={() => { resetForm(); setShowForm(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-xl transition text-sm shadow-sm">
           <Plus size={16} /> Add New Item
         </button>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search items..." className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm" />
+          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search items..." className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
         </div>
-        <div className="relative">
-          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="pl-9 pr-8 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm appearance-none bg-white">
-            {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
-          </select>
-        </div>
+        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white">
+          {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+        </select>
       </div>
 
-      {/* Items Table */}
       <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-slate-50 border-b border-gray-100">
-                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Item</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">Category</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Price</th>
-                <th className="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Item</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Category</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Price</th>
+                <th className="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Status</th>
+                <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -98,9 +93,7 @@ export default function AdminMenuPage() {
                 <tr key={item.id} className="hover:bg-slate-50/50 transition">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center text-xl">
-                        {item.imageUrl}
-                      </div>
+                      <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center text-xl">{item.imageUrl}</div>
                       <div>
                         <p className="font-medium text-slate-800 text-sm">{item.name}</p>
                         <p className="text-xs text-slate-500 max-w-[200px] truncate">{item.description}</p>
@@ -127,9 +120,7 @@ export default function AdminMenuPage() {
             </tbody>
           </table>
         </div>
-        {filteredItems.length === 0 && (
-          <div className="p-8 text-center text-slate-500">No items match your filters</div>
-        )}
+        {filteredItems.length === 0 && <div className="p-8 text-center text-slate-500">No items match your filters</div>}
       </div>
 
       {/* Form Modal */}

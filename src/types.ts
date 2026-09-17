@@ -1,8 +1,8 @@
-export type UserRole = 'admin' | 'kitchen' | null;
+export type UserRole = 'admin' | 'kitchen';
 
 export interface AuthState {
   isLoggedIn: boolean;
-  role: UserRole;
+  role: UserRole | null;
   username: string;
 }
 
@@ -25,7 +25,7 @@ export interface Table {
   status: TableStatus;
 }
 
-export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'served' | 'paid';
+export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'served' | 'paid' | 'cancelled';
 
 export interface OrderItem {
   menuItem: MenuItem;
@@ -40,11 +40,6 @@ export interface Order {
   status: OrderStatus;
   timestamp: number;
   customerNote?: string;
-}
-
-export interface CartItem {
-  menuItem: MenuItem;
-  quantity: number;
 }
 
 export interface HotelSettings {

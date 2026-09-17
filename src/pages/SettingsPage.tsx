@@ -3,7 +3,7 @@ import { getSettings, updateSettings } from '../store';
 import { HotelSettings } from '../types';
 import { Save, Building2, Phone, DollarSign, Percent } from 'lucide-react';
 
-export default function AdminSettingsPage() {
+export default function SettingsPage() {
   const [settings, setSettings] = useState<HotelSettings>(getSettings());
   const [saved, setSaved] = useState(false);
 
@@ -18,7 +18,7 @@ export default function AdminSettingsPage() {
     <div className="max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Settings</h1>
-        <p className="text-slate-500 text-sm mt-1">Configure your hotel/restaurant details</p>
+        <p className="text-slate-500 text-sm mt-1">Configure your restaurant details</p>
       </div>
 
       {saved && (
@@ -60,7 +60,7 @@ export default function AdminSettingsPage() {
           </label>
           <input type="number" min="0" max="100" step="0.5" value={settings.taxRate} onChange={(e) => setSettings({...settings, taxRate: parseFloat(e.target.value)})} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
         </div>
-        <button type="submit" className="flex items-center gap-2 px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-xl transition text-sm shadow-sm shadow-indigo-500/20">
+        <button type="submit" className="flex items-center gap-2 px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-xl transition text-sm shadow-sm">
           <Save size={16} /> Save Settings
         </button>
       </form>

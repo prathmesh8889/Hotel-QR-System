@@ -1,132 +1,96 @@
 import { useNavigate } from 'react-router-dom';
-import { QrCode, Monitor, Smartphone, ArrowRight } from 'lucide-react';
+import { QrCode, Monitor, Smartphone, ArrowRight, Shield, ChefHat, Zap, Globe } from 'lucide-react';
 
 export default function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
-      {/* Hero Section */}
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-700 rounded-full text-sm font-medium mb-6">
-            <QrCode size={16} />
-            QR Code Ordering System
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900">
+      {/* Hero */}
+      <div className="max-w-5xl mx-auto px-4 py-16">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 rounded-full text-sm font-medium mb-6">
+            <Zap size={14} />
+            Enterprise Restaurant Management
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Hotel Digital<br />
-            <span className="text-amber-500">Ordering System</span>
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            QR Code Based<br />
+            <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+              Hotel Ordering System
+            </span>
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            A complete QR code-based restaurant ordering solution. Customers scan, browse, and order — 
-            all from their phone. No app required.
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-8">
+            A complete digital ordering solution. Customers scan, browse, and order from their phone.
+            Real-time kitchen display. Professional admin dashboard. No app required.
           </p>
-        </div>
-
-        {/* How it works */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border text-center">
-            <div className="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Smartphone className="text-amber-600" size={28} />
-            </div>
-            <h3 className="font-bold text-gray-800 mb-2">1. Scan QR Code</h3>
-            <p className="text-sm text-gray-500">Customer scans the QR code placed on their table</p>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm border text-center">
-            <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">📋</span>
-            </div>
-            <h3 className="font-bold text-gray-800 mb-2">2. Browse & Order</h3>
-            <p className="text-sm text-gray-500">View menu, add items to cart, and place order</p>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm border text-center">
-            <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Monitor className="text-green-600" size={28} />
-            </div>
-            <h3 className="font-bold text-gray-800 mb-2">3. Kitchen Receives</h3>
-            <p className="text-sm text-gray-500">Order appears instantly on admin dashboard</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={() => navigate('/admin/login')}
+              className="flex items-center gap-2 px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-xl transition shadow-lg shadow-indigo-500/30"
+            >
+              <Shield size={18} />
+              Admin Login
+              <ArrowRight size={16} />
+            </button>
+            <button
+              onClick={() => navigate('/menu?tableId=1')}
+              className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition border border-white/20"
+            >
+              <Smartphone size={18} />
+              Customer Demo
+            </button>
           </div>
         </div>
 
-        {/* Quick Access */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-          <button
-            onClick={() => navigate('/admin/login')}
-            className="group bg-white rounded-2xl p-6 shadow-sm border hover:shadow-md hover:border-amber-300 transition text-left"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center group-hover:bg-amber-200 transition">
-                <Monitor className="text-amber-600" size={24} />
+        {/* How It Works */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+          {[
+            { icon: QrCode, title: '1. Scan QR Code', desc: 'Customer scans QR on their table', color: 'from-orange-500 to-amber-500' },
+            { icon: Smartphone, title: '2. Browse & Order', desc: 'View menu, add to cart, checkout', color: 'from-indigo-500 to-purple-500' },
+            { icon: Monitor, title: '3. Kitchen Receives', desc: 'Real-time order display in kitchen', color: 'from-emerald-500 to-teal-500' },
+          ].map((step, idx) => (
+            <div key={idx} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 text-center hover:bg-white/10 transition">
+              <div className={`w-14 h-14 bg-gradient-to-br ${step.color} rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg`}>
+                <step.icon className="text-white" size={24} />
               </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-800">Admin Dashboard</h3>
-                <p className="text-sm text-gray-500">Manage menu, tables & orders</p>
-              </div>
-              <ArrowRight className="text-gray-400 group-hover:text-amber-500 transition" size={20} />
+              <h3 className="font-bold text-white mb-2">{step.title}</h3>
+              <p className="text-sm text-slate-400">{step.desc}</p>
             </div>
-          </button>
-
-          <button
-            onClick={() => navigate('/menu?tableId=1')}
-            className="group bg-white rounded-2xl p-6 shadow-sm border hover:shadow-md hover:border-green-300 transition text-left"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200 transition">
-                <Smartphone className="text-green-600" size={24} />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-800">Customer Demo</h3>
-                <p className="text-sm text-gray-500">Try the ordering experience</p>
-              </div>
-              <ArrowRight className="text-gray-400 group-hover:text-green-500 transition" size={20} />
-            </div>
-          </button>
+          ))}
         </div>
 
-        {/* Features */}
-        <div className="mt-12 bg-white rounded-2xl p-6 shadow-sm border">
-          <h2 className="font-bold text-gray-800 text-center mb-6">System Features</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <span className="text-2xl block mb-1">📱</span>
-              <p className="text-xs text-gray-600 font-medium">Mobile First</p>
-            </div>
-            <div>
-              <span className="text-2xl block mb-1">⚡</span>
-              <p className="text-xs text-gray-600 font-medium">Real-time Updates</p>
-            </div>
-            <div>
-              <span className="text-2xl block mb-1">🔒</span>
-              <p className="text-xs text-gray-600 font-medium">Secure Login</p>
-            </div>
-            <div>
-              <span className="text-2xl block mb-1">🖨️</span>
-              <p className="text-xs text-gray-600 font-medium">Print QR Codes</p>
-            </div>
-            <div>
-              <span className="text-2xl block mb-1">🛒</span>
-              <p className="text-xs text-gray-600 font-medium">Cart System</p>
-            </div>
-            <div>
-              <span className="text-2xl block mb-1">📊</span>
-              <p className="text-xs text-gray-600 font-medium">Order Tracking</p>
-            </div>
-            <div>
-              <span className="text-2xl block mb-1">🌐</span>
-              <p className="text-xs text-gray-600 font-medium">No App Needed</p>
-            </div>
-            <div>
-              <span className="text-2xl block mb-1">📶</span>
-              <p className="text-xs text-gray-600 font-medium">Works Offline</p>
-            </div>
+        {/* Features Grid */}
+        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8">
+          <h2 className="text-xl font-bold text-white text-center mb-8">System Features</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { icon: '📱', label: 'Mobile First', desc: 'Responsive design' },
+              { icon: '⚡', label: 'Real-time', desc: 'Instant updates' },
+              { icon: '🔒', label: 'Role-based', desc: 'Admin & Kitchen' },
+              { icon: '🖨️', label: 'QR Codes', desc: 'Auto-generated' },
+              { icon: '🛒', label: 'Smart Cart', desc: 'Easy ordering' },
+              { icon: '📊', label: 'Dashboard', desc: 'Live analytics' },
+              { icon: '🌐', label: 'No App', desc: 'Browser-based' },
+              { icon: '👨‍🍳', label: 'KDS', desc: 'Kitchen display' },
+            ].map((feat, idx) => (
+              <div key={idx} className="text-center">
+                <span className="text-3xl block mb-2">{feat.icon}</span>
+                <p className="text-white text-sm font-medium">{feat.label}</p>
+                <p className="text-slate-500 text-xs">{feat.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Tech Stack */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-400">
-            Built with React • Tailwind CSS • Socket.io Simulation • QR Code Generation
+        <div className="text-center mt-12">
+          <p className="text-slate-500 text-sm">
+            Built with React • TypeScript • Tailwind CSS • Socket.io Simulation • QR Code Generation
           </p>
+          <div className="flex items-center justify-center gap-2 mt-4 text-slate-600 text-xs">
+            <Globe size={12} />
+            <span>HotelOS v2.0 — Enterprise Edition</span>
+          </div>
         </div>
       </div>
     </div>

@@ -39,7 +39,11 @@ export default function ProtectedLayout() {
   const currentPageTitle = pageTitles[location.pathname] || 'Dashboard';
 
   const handleSimulateOrder = async () => {
-    await simulateNewOrder();
+    try {
+      await simulateNewOrder();
+    } catch (e) {
+      console.error('Failed to simulate order:', e);
+    }
   };
 
   return (

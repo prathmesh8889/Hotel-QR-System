@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getMenuItems, getTables, getSettings, placeOrder, notify } from '../store';
-import { MenuItem, CartItem, Order } from '../types';
-import { User, Phone, ShoppingBag, CheckCircle, Receipt } from 'lucide-react';
+import { getMenuItems, getTables, getSettings, placeOrder, getOrders, subscribe } from '../store';
+import { MenuItem, CartItem, Order, OrderStatus } from '../types';
+import { User, Phone, ShoppingBag, CheckCircle, Receipt, CreditCard, Clock, ChefHat, Truck } from 'lucide-react';
 
 export default function CustomerFlow() {
   const [searchParams] = useSearchParams();
   const tableId = searchParams.get('tableId');
 
-  const [step, setStep] = useState<'contact' | 'menu' | 'bill'>('contact');
+  const [step, setStep] = useState<'contact' | 'menu' | 'bill' | 'payment'>('contact');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -17,6 +17,9 @@ export default function CustomerFlow() {
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
+  const [currentOrderStatus, setCurrentOrderStatus] = useState<OrderStatus | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'card'>('cash');
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'completed'>('pending');
 
   useEffect(() => {
     setTimeout(() => {
@@ -24,6 +27,25 @@ export default function CustomerFlow() {
       setLoading(false);
     }, 600);
   }, []);
+
+  // Real-time order status tracking
+  useEffect(() => {
+    if (!completedOrder) return;
+    
+    const checkStatus = () => {
+      const orders = getOrders();
+      const order = orders.find((o) => o.id === completedOrder.id);
+      if (order) {
+        setCurrentOrderStatus(order.status);
+      }
+    };
+    
+    checkStatus();
+    const unsub = subscribe(checkStatus);
+    const interval = setInterval(checkStatus, 2000);
+    
+    return () => { unsub(); clearInterval(interval); };
+  }, [completedOrder]);
 
   if (!tableId) {
     return (
@@ -54,24 +76,8 @@ export default function CustomerFlow() {
     );
   }
 
-  const [phoneError, setPhoneError] = useState('');
-
-  const validatePhone = (phone: string): boolean => {
-    // Indian phone number validation: +91 followed by 10 digits, or just 10 digits
-    const phoneRegex = /^(\+91[-\s]?)?[6-9]\d{9}$/;
-    const cleanPhone = phone.replace(/[-\s]/g, '');
-    return phoneRegex.test(cleanPhone) || /^\d{10}$/.test(cleanPhone);
-  };
-
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validatePhone(customerPhone)) {
-      setPhoneError('Please enter a valid 10-digit Indian phone number');
-      return;
-    }
-    
-    setPhoneError('');
     setStep('menu');
   };
 
@@ -115,6 +121,7 @@ export default function CustomerFlow() {
       
       if (order) {
         setCompletedOrder(order);
+        setCurrentOrderStatus('pending');
         setStep('bill');
       } else {
         alert('Order place करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.');
@@ -125,6 +132,34 @@ export default function CustomerFlow() {
     }
     
     setPlacing(false);
+  };
+
+  const handlePayment = () => {
+    setStep('payment');
+  };
+
+  const handleCompletePayment = () => {
+    setPaymentStatus('processing');
+    setTimeout(() => {
+      setPaymentStatus('completed');
+    }, 2000);
+  };
+
+  const getStatusInfo = (status: OrderStatus | null) => {
+    switch (status) {
+      case 'pending':
+        return { label: 'Order Received', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', progress: 25 };
+      case 'preparing':
+        return { label: 'Being Prepared', icon: ChefHat, color: 'text-blue-600', bg: 'bg-blue-50', progress: 50 };
+      case 'ready':
+        return { label: 'Ready to Serve', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50', progress: 75 };
+      case 'served':
+        return { label: 'Served', icon: Truck, color: 'text-purple-600', bg: 'bg-purple-50', progress: 100 };
+      case 'paid':
+        return { label: 'Completed', icon: CreditCard, color: 'text-slate-600', bg: 'bg-slate-50', progress: 100 };
+      default:
+        return { label: 'Processing', icon: Clock, color: 'text-gray-600', bg: 'bg-gray-50', progress: 0 };
+    }
   };
 
   // Step 1: Contact Information
@@ -164,20 +199,12 @@ export default function CustomerFlow() {
                   <input
                     type="tel"
                     value={customerPhone}
-                    onChange={(e) => {
-                      setCustomerPhone(e.target.value);
-                      if (phoneError) setPhoneError('');
-                    }}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm ${
-                      phoneError ? 'border-red-500' : 'border-gray-200'
-                    }`}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm"
                     placeholder="+91 98765 43210"
                     required
                   />
                 </div>
-                {phoneError && (
-                  <p className="mt-1 text-xs text-red-600">{phoneError}</p>
-                )}
               </div>
 
               <button
@@ -259,7 +286,6 @@ export default function CustomerFlow() {
           )}
         </div>
 
-        {/* Cart Bottom Bar */}
         {cartCount > 0 && (
           <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-40">
             <div className="px-4 py-4">
@@ -291,8 +317,11 @@ export default function CustomerFlow() {
     );
   }
 
-  // Step 3: Bill
+  // Step 3: Bill with Real-time Status
   if (step === 'bill' && completedOrder) {
+    const statusInfo = getStatusInfo(currentOrderStatus);
+    const StatusIcon = statusInfo.icon;
+
     return (
       <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white p-4">
         <div className="max-w-md mx-auto">
@@ -303,6 +332,23 @@ export default function CustomerFlow() {
               </div>
               <h1 className="text-2xl font-bold text-gray-800 mb-2">Order Placed!</h1>
               <p className="text-gray-500 text-sm">Thank you for your order</p>
+            </div>
+
+            {/* Real-time Status Tracker */}
+            <div className={`${statusInfo.bg} rounded-xl p-4 mb-6`}>
+              <div className="flex items-center gap-3 mb-3">
+                <StatusIcon className={statusInfo.color} size={24} />
+                <div>
+                  <p className={`font-bold ${statusInfo.color}`}>{statusInfo.label}</p>
+                  <p className="text-xs text-gray-600">Real-time status update</p>
+                </div>
+              </div>
+              <div className="w-full bg-white rounded-full h-2 overflow-hidden">
+                <div 
+                  className={`h-full ${statusInfo.color.replace('text-', 'bg-')} transition-all duration-500`}
+                  style={{ width: `${statusInfo.progress}%` }}
+                />
+              </div>
             </div>
 
             <div className="border-t border-b py-4 mb-4">
@@ -370,11 +416,131 @@ export default function CustomerFlow() {
               </div>
             </div>
 
-            <div className="mt-6 p-4 bg-emerald-50 rounded-xl text-center">
-              <p className="text-emerald-700 text-sm font-medium">
-                Your order is being prepared. Estimated time: 15-20 minutes
-              </p>
+            {/* Payment Button */}
+            {currentOrderStatus !== 'paid' && (
+              <button
+                onClick={handlePayment}
+                className="w-full mt-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30"
+              >
+                <CreditCard size={20} />
+                Proceed to Payment
+              </button>
+            )}
+
+            {currentOrderStatus === 'paid' && (
+              <div className="mt-6 p-4 bg-emerald-50 rounded-xl text-center">
+                <CheckCircle className="text-emerald-600 mx-auto mb-2" size={24} />
+                <p className="text-emerald-700 text-sm font-medium">Payment Completed</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 4: Payment
+  if (step === 'payment' && completedOrder) {
+    const totalWithTax = completedOrder.totalAmount * (1 + settings.taxRate / 100);
+
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4">
+        <div className="max-w-md mx-auto">
+          <div className="bg-white rounded-3xl shadow-xl p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CreditCard className="text-blue-600" size={32} />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">Payment</h1>
+              <p className="text-gray-500 text-sm">Order #{completedOrder.id.slice(-6)}</p>
             </div>
+
+            <div className="bg-gray-50 rounded-xl p-4 mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-600">Amount to Pay</span>
+                <span className="text-2xl font-bold text-blue-600">₹{totalWithTax.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {paymentStatus === 'completed' ? (
+              <div className="text-center py-8">
+                <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="text-emerald-600" size={40} />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800 mb-2">Payment Successful!</h2>
+                <p className="text-gray-500 text-sm mb-4">Thank you for your payment</p>
+                <p className="text-xs text-gray-400">Transaction ID: TXN{Date.now()}</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3 mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Payment Method</label>
+                  
+                  <button
+                    onClick={() => setPaymentMethod('cash')}
+                    className={`w-full p-4 border-2 rounded-xl transition ${
+                      paymentMethod === 'cash' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">💵</span>
+                      <div className="text-left">
+                        <p className="font-semibold text-gray-800">Cash</p>
+                        <p className="text-xs text-gray-500">Pay at counter</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => setPaymentMethod('upi')}
+                    className={`w-full p-4 border-2 rounded-xl transition ${
+                      paymentMethod === 'upi' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">📱</span>
+                      <div className="text-left">
+                        <p className="font-semibold text-gray-800">UPI</p>
+                        <p className="text-xs text-gray-500">GPay, PhonePe, Paytm</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => setPaymentMethod('card')}
+                    className={`w-full p-4 border-2 rounded-xl transition ${
+                      paymentMethod === 'card' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">💳</span>
+                      <div className="text-left">
+                        <p className="font-semibold text-gray-800">Card</p>
+                        <p className="text-xs text-gray-500">Credit/Debit Card</p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleCompletePayment}
+                  disabled={paymentStatus === 'processing'}
+                  className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {paymentStatus === 'processing' ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard size={20} />
+                      Pay ₹{totalWithTax.toFixed(2)}
+                    </>
+                  )}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -98,13 +98,13 @@ export default function CustomerFlow() {
   const cartTotal = cart.reduce((sum, item) => sum + item.menuItem.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (cart.length === 0) return;
     setPlacing(true);
     const orderItems = cart.map((item) => ({ menuItem: item.menuItem, quantity: item.quantity }));
     
-    setTimeout(() => {
-      const order = placeOrder(
+    try {
+      const order = await placeOrder(
         tableNumber,
         orderItems,
         cartTotal,
@@ -112,11 +112,19 @@ export default function CustomerFlow() {
         customerPhone,
         customerNote || undefined
       );
-      notify();
-      setCompletedOrder(order);
-      setPlacing(false);
-      setStep('bill');
-    }, 1000);
+      
+      if (order) {
+        setCompletedOrder(order);
+        setStep('bill');
+      } else {
+        alert('Order place करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.');
+      }
+    } catch (error) {
+      console.error('Order placement error:', error);
+      alert('Order place करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.');
+    }
+    
+    setPlacing(false);
   };
 
   // Step 1: Contact Information

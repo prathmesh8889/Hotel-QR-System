@@ -76,7 +76,41 @@ export function notify(): void { notifyListeners(); }
 async function syncToSupabase(table: string, data: any[]) {
   if (!isSupabaseConfigured()) return;
   try {
-    await supabase.from(table).upsert(data);
+    // Convert camelCase to snake_case for Supabase
+    const convertedData = data.map((item) => {
+      if (table === 'orders') {
+        return {
+          id: item.id,
+          table_number: item.tableNumber,
+          customer_name: item.customerName,
+          customer_phone: item.customerPhone,
+          items: item.items,
+          total_amount: item.totalAmount,
+          status: item.status,
+          customer_note: item.customerNote,
+          timestamp: item.timestamp,
+        };
+      } else if (table === 'tables') {
+        return {
+          id: item.id,
+          number: item.number,
+          status: item.status,
+        };
+      } else if (table === 'menu_items') {
+        return {
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          category: item.category,
+          image_url: item.imageUrl,
+          available: item.available,
+        };
+      }
+      return item;
+    });
+    
+    await supabase.from(table).upsert(convertedData, { onConflict: 'id' });
   } catch (e) {
     console.warn('Supabase sync failed:', e);
   }
@@ -175,30 +209,57 @@ export function getActiveOrders(): Order[] {
   return getOrders().filter((o) => ['pending', 'preparing', 'ready'].includes(o.status));
 }
 
-export function placeOrder(
+export async function placeOrder(
   tableNumber: number,
   items: Order['items'],
   totalAmount: number,
   customerName: string,
   customerPhone: string,
   customerNote?: string
-): Order {
-  const orders = getOrders();
+): Promise<Order> {
   const newOrder: Order = {
     id: `ORD-${Date.now()}`, tableNumber, customerName, customerPhone,
     items, totalAmount, status: 'pending', timestamp: Date.now(), customerNote,
   };
+  
+  // Save to localStorage first (for immediate UI update)
+  const orders = getOrders();
   orders.unshift(newOrder);
   localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
-  syncToSupabase('orders', orders);
-
+  
+  // Update table status
   const tables = getTables();
   const tableIndex = tables.findIndex((t) => t.number === tableNumber);
   if (tableIndex !== -1) {
     tables[tableIndex].status = 'occupied';
     localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(tables));
-    syncToSupabase('tables', tables);
   }
+  
+  // Sync to Supabase (for cross-device sync)
+  if (isSupabaseConfigured()) {
+    try {
+      // Insert order to Supabase
+      await supabase.from('orders').insert({
+        id: newOrder.id,
+        table_number: newOrder.tableNumber,
+        customer_name: newOrder.customerName,
+        customer_phone: newOrder.customerPhone,
+        items: newOrder.items,
+        total_amount: newOrder.totalAmount,
+        status: newOrder.status,
+        customer_note: newOrder.customerNote,
+        timestamp: newOrder.timestamp,
+      });
+      
+      // Update table status in Supabase
+      if (tableIndex !== -1) {
+        await supabase.from('tables').update({ status: 'occupied' }).eq('number', tableNumber);
+      }
+    } catch (e) {
+      console.warn('Supabase order insert failed:', e);
+    }
+  }
+  
   notifyListeners();
   return newOrder;
 }
@@ -230,7 +291,7 @@ export function updateOrderStatus(orderId: string, status: OrderStatus): Order |
   return orders[index];
 }
 
-export function simulateNewOrder(): Order {
+export async function simulateNewOrder(): Promise<Order> {
   const items = getMenuItems().filter((i) => i.available);
   const numItems = Math.floor(Math.random() * 3) + 1;
   const selectedItems: Order['items'] = [];
@@ -246,7 +307,7 @@ export function simulateNewOrder(): Order {
   const notes = ['', 'No onions please', 'Extra spicy!', 'Allergic to nuts', 'Less oil please', ''];
   const names = ['Rajesh Kumar', 'Priya Sharma', 'Amit Patel', 'Sneha Reddy', 'Vikram Singh'];
   const phones = ['+91-98765-43210', '+91-87654-32109', '+91-76543-21098', '+91-65432-10987', '+91-54321-09876'];
-  return placeOrder(
+  return await placeOrder(
     tableNum, selectedItems, total,
     names[Math.floor(Math.random() * names.length)],
     phones[Math.floor(Math.random() * phones.length)],
